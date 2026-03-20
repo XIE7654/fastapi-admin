@@ -1,0 +1,39 @@
+# 核心框架
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+
+# 数据库
+sqlalchemy>=2.0.36
+aiomysql>=0.2.0
+greenlet>=3.1.0
+alembic>=1.14.0
+pymysql>=1.1.0
+
+# 认证授权
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.18
+
+# 缓存
+redis>=5.2.0
+
+# 定时任务
+apscheduler>=3.10.0
+
+# 监控
+prometheus-client>=0.21.0
+
+# 工具库
+loguru>=0.7.0
+httpx>=0.28.0
+email-validator>=2.2.0
+python-dateutil>=2.9.0
+cryptography>=43.0.0
+aiofiles>=24.1.0
+user-agents>=2.2.0
+pillow>=10.0.0
+
+# Excel处理
+openpyxl>=3.1.0
