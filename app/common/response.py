@@ -4,6 +4,7 @@
 from typing import Any, Optional, Generic, TypeVar, List
 from dataclasses import dataclass, field
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from app.core.exceptions import BusinessException
 
@@ -43,6 +44,9 @@ def success(data: Any = None, msg: str = "success") -> dict:
     Returns:
         响应字典
     """
+    # 处理 Pydantic 模型，使用别名序列化
+    if isinstance(data, BaseModel):
+        data = data.model_dump(by_alias=True)
     return Response(code=0, msg=msg, data=data).to_dict()
 
 

@@ -46,12 +46,12 @@ class TokenResponse(BaseModel):
 class LoginResponse(BaseModel):
     """登录响应"""
 
-    user_id: int = Field(..., description="用户ID")
-    username: str = Field(..., description="用户账号")
-    nickname: str = Field(..., description="用户昵称")
-    avatar: Optional[str] = Field(None, description="头像")
-    dept_id: Optional[int] = Field(None, description="部门ID")
-    token: TokenResponse = Field(..., description="Token信息")
+    user_id: int = Field(..., alias="userId", description="用户ID")
+    access_token: str = Field(..., alias="accessToken", description="访问令牌")
+    refresh_token: str = Field(..., alias="refreshToken", description="刷新令牌")
+    expires_time: int = Field(..., alias="expiresTime", description="过期时间戳(毫秒)")
+
+    model_config = {"populate_by_name": True}
 
 
 class RefreshTokenRequest(BaseModel):

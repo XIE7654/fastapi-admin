@@ -56,16 +56,9 @@ class AuthService:
 
         return LoginResponse(
             user_id=user.id,
-            username=user.username,
-            nickname=user.nickname,
-            avatar=user.avatar,
-            dept_id=user.dept_id,
-            token=TokenResponse(
-                access_token=access_token_do.access_token,
-                refresh_token=access_token_do.refresh_token,
-                token_type="Bearer",
-                expires_in=int((access_token_do.expires_time - datetime.now()).total_seconds()),
-            ),
+            access_token=access_token_do.access_token,
+            refresh_token=access_token_do.refresh_token,
+            expires_time=int(access_token_do.expires_time.timestamp() * 1000),
         )
 
     @staticmethod
