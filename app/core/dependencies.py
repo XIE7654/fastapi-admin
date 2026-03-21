@@ -7,7 +7,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import verify_token
 from app.core.tenant import set_tenant, get_tenant_id
 from app.core.exceptions import UnauthorizedException, ForbiddenException
 
@@ -38,19 +37,18 @@ async def get_current_user(
     """
     from app.module.system.model.user import User
     from app.module.system.service.user import UserService
+    from app.module.system.service.oauth2_token import OAuth2TokenService
 
     if credentials is None:
         raise UnauthorizedException("请登录后访问")
 
     token = credentials.credentials
 
-    # 验证令牌
-    payload = verify_token(token, token_type="access")
-    if payload is None:
-        raise UnauthorizedException("登录已过期，请重新登录")
+    # 使用 OAuth2TokenService 验证令牌
+    token_data = await OAuth2TokenService.check_access_token(db, token)
 
-    user_id = payload.get("user_id")
-    tenant_id = payload.get("tenant_id")
+    user_id = token_data.get("userId")
+    tenant_id = token_data.get("tenantId")
 
     if user_id is None:
         raise UnauthorizedException("无效的登录凭证")

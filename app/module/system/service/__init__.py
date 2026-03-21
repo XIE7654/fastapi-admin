@@ -14,6 +14,7 @@ from app.module.system.service.config import ConfigService
 from app.module.system.service.online_user import OnlineUserService
 from app.module.system.service.tenant import TenantService
 from app.module.system.service.data_permission import DataPermissionService, DataScope, get_data_permission_filter
+from app.module.system.service.oauth2_token import OAuth2TokenService, UserTypeEnum
 
 __all__ = [
     "UserService",
@@ -32,4 +33,6 @@ __all__ = [
     "DataPermissionService",
     "DataScope",
     "get_data_permission_filter",
+    "OAuth2TokenService",
+    "UserTypeEnum",
 ]

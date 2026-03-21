@@ -2,7 +2,7 @@
 认证控制器
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Request, Body
+from fastapi import APIRouter, Depends, Request, Body, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -44,23 +44,32 @@ async def login(
 
 @router.post("/logout", summary="登出系统")
 async def logout(
+    db: AsyncSession = Depends(get_db),
+    authorization: Optional[str] = Header(None),
     current_user: User = Depends(get_current_user),
 ):
     """用户登出"""
-    await AuthService.logout(current_user.id, "")
+    # 从 Authorization header 提取 token
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+
+    if token:
+        await AuthService.logout(db, token)
     return success(data=True)
 
 
 @router.post("/refresh-token", summary="刷新令牌")
 async def refresh_token(
     req: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db),
 ):
     """
     刷新Token
 
     - **refresh_token**: 刷新令牌
     """
-    result = await AuthService.refresh_token(req.refresh_token)
+    result = await AuthService.refresh_token(db, req.refresh_token)
     return success(data=result)
 
 

@@ -11,7 +11,14 @@ from passlib.context import CryptContext
 from app.config import settings
 
 # 密码加密上下文
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 使用 bcrypt 算法，rounds=4 与 ruoyi-vue-pro 的 BCryptPasswordEncoder(strength=4) 保持一致
+# BCryptPasswordEncoder 的 strength 参数对应 passlib 的 rounds 参数
+# rounds=4 表示 2^4=16 轮加密
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=4  # 与 ruoyi-vue-pro 的 passwordEncoderLength=4 保持一致
+)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

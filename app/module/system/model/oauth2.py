@@ -4,10 +4,10 @@ OAuth2 模型
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, BigInteger, SmallInteger, Text, Index
 
-from app.module.system.model.base import Base, TimestampMixin, TenantMixin
+from app.module.system.model.base import Base, TimestampMixin, TenantMixin, SoftDeleteMixin
 
 
-class OAuth2Client(Base, TimestampMixin):
+class OAuth2Client(Base, TimestampMixin, SoftDeleteMixin):
     """OAuth2 客户端表"""
 
     __tablename__ = "system_oauth2_client"
@@ -15,13 +15,13 @@ class OAuth2Client(Base, TimestampMixin):
     client_id = Column(String(255), nullable=False, comment="客户端编号")
     secret = Column(String(255), nullable=False, comment="客户端密钥")
     name = Column(String(255), nullable=False, comment="应用名")
-    logo = Column(String(255), nullable=False, comment="应用图标")
+    logo = Column(String(255), nullable=True, comment="应用图标")
     description = Column(String(255), nullable=True, comment="应用描述")
-    status = Column(SmallInteger, nullable=False, comment="状态")
-    access_token_validity_seconds = Column(Integer, nullable=False, comment="访问令牌的有效期")
-    refresh_token_validity_seconds = Column(Integer, nullable=False, comment="刷新令牌的有效期")
-    redirect_uris = Column(String(255), nullable=False, comment="可重定向的URI地址")
-    authorized_grant_types = Column(String(255), nullable=False, comment="授权类型")
+    status = Column(SmallInteger, default=0, comment="状态: 0-正常, 1-禁用")
+    access_token_validity_seconds = Column(Integer, nullable=False, default=86400, comment="访问令牌的有效期")
+    refresh_token_validity_seconds = Column(Integer, nullable=False, default=2592000, comment="刷新令牌的有效期")
+    redirect_uris = Column(String(255), nullable=True, comment="可重定向的URI地址")
+    authorized_grant_types = Column(String(255), nullable=True, comment="授权类型")
     scopes = Column(String(255), nullable=True, comment="授权范围")
     auto_approve_scopes = Column(String(255), nullable=True, comment="自动通过的授权范围")
     authorities = Column(String(255), nullable=True, comment="权限")

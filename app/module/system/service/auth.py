@@ -8,11 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.module.system.service.user import UserService
 from app.module.system.service.menu import MenuService
 from app.module.system.service.role import RoleService
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-    verify_token,
-)
+from app.module.system.service.oauth2_token import OAuth2TokenService, UserTypeEnum
 from app.core.redis import get_redis, RedisKeyPrefix, set_cache, get_cache, delete_cache
 from app.core.exceptions import BusinessException, ErrorCode
 from app.module.system.schema.auth import (
@@ -44,24 +40,14 @@ class AuthService:
         # 验证用户名密码
         user = await UserService.validate_login(db, login_req.username, login_req.password)
 
-        # 生成Token
-        access_token = create_access_token(
-            subject=user.username,
+        # 使用 OAuth2TokenService 创建访问令牌
+        access_token_do = await OAuth2TokenService.create_access_token(
+            db=db,
             user_id=user.id,
-            tenant_id=login_req.tenant_id,
-        )
-        refresh_token = create_refresh_token(
-            subject=user.username,
-            user_id=user.id,
-            tenant_id=login_req.tenant_id,
-        )
-
-        # 缓存登录用户信息
-        redis = await get_redis()
-        await set_cache(
-            f"{RedisKeyPrefix.LOGIN_USER}{user.id}",
-            access_token,
-            expire=30 * 24 * 60 * 60  # 30天
+            user_type=UserTypeEnum.ADMIN,
+            client_id="default",
+            tenant_id=login_req.tenant_id or 1,
+            user=user,
         )
 
         # 更新最后登录信息
@@ -75,71 +61,50 @@ class AuthService:
             avatar=user.avatar,
             dept_id=user.dept_id,
             token=TokenResponse(
-                access_token=access_token,
-                refresh_token=refresh_token,
+                access_token=access_token_do.access_token,
+                refresh_token=access_token_do.refresh_token,
                 token_type="Bearer",
-                expires_in=30 * 24 * 60 * 60,
+                expires_in=int((access_token_do.expires_time - datetime.now()).total_seconds()),
             ),
         )
 
     @staticmethod
-    async def logout(user_id: int, token: str) -> bool:
+    async def logout(db: AsyncSession, access_token: str) -> bool:
         """
         用户登出
 
         Args:
-            user_id: 用户ID
-            token: 访问令牌
+            db: 数据库会话
+            access_token: 访问令牌
 
         Returns:
             是否成功
         """
-        # 删除缓存的登录信息
-        redis = await get_redis()
-        await delete_cache(f"{RedisKeyPrefix.LOGIN_USER}{user_id}")
-
-        # 将Token加入黑名单
-        # TODO: 实现Token黑名单
-
-        return True
+        return await OAuth2TokenService.remove_access_token(db, access_token)
 
     @staticmethod
-    async def refresh_token(refresh_token: str) -> TokenResponse:
+    async def refresh_token(db: AsyncSession, refresh_token: str) -> TokenResponse:
         """
         刷新Token
 
         Args:
+            db: 数据库会话
             refresh_token: 刷新令牌
 
         Returns:
             新的Token响应
         """
-        # 验证刷新令牌
-        payload = verify_token(refresh_token, token_type="refresh")
-        if not payload:
-            raise BusinessException(code=ErrorCode.TOKEN_INVALID, message="刷新令牌无效")
-
-        user_id = payload.get("user_id")
-        username = payload.get("sub")
-        tenant_id = payload.get("tenant_id")
-
-        # 生成新的Token
-        new_access_token = create_access_token(
-            subject=username,
-            user_id=user_id,
-            tenant_id=tenant_id,
-        )
-        new_refresh_token = create_refresh_token(
-            subject=username,
-            user_id=user_id,
-            tenant_id=tenant_id,
+        access_token_do = await OAuth2TokenService.refresh_access_token(
+            db=db,
+            refresh_token=refresh_token,
+            client_id="default",
         )
 
         return TokenResponse(
-            access_token=new_access_token,
-            refresh_token=new_refresh_token,
+            access_token=access_token_do.access_token,
+            refresh_token=access_token_do.refresh_token,
             token_type="Bearer",
-            expires_in=30 * 24 * 60 * 60,
+            expires_in=int((access_token_do.expires_time - datetime.now()).total_seconds()),
         )
 
     @staticmethod
