@@ -1,7 +1,7 @@
 """
 FastAPI 公共依赖
 """
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,8 +10,10 @@ from app.core.database import get_db
 from app.core.security import verify_token
 from app.core.tenant import set_tenant, get_tenant_id
 from app.core.exceptions import UnauthorizedException, ForbiddenException
-from app.module.system.model.user import User
-from app.module.system.service.user import UserService
+
+# 使用 TYPE_CHECKING 避免循环导入
+if TYPE_CHECKING:
+    from app.module.system.model.user import User
 
 # HTTP Bearer 认证方案
 security = HTTPBearer(auto_error=False)
@@ -20,7 +22,7 @@ security = HTTPBearer(auto_error=False)
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: AsyncSession = Depends(get_db),
-) -> User:
+) -> "User":
     """
     获取当前登录用户
 
@@ -34,6 +36,9 @@ async def get_current_user(
     Raises:
         UnauthorizedException: 未授权
     """
+    from app.module.system.model.user import User
+    from app.module.system.service.user import UserService
+
     if credentials is None:
         raise UnauthorizedException("请登录后访问")
 
@@ -68,7 +73,7 @@ async def get_current_user(
 async def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: AsyncSession = Depends(get_db),
-) -> Optional[User]:
+) -> Optional["User"]:
     """
     获取当前登录用户（可选）
 
@@ -94,7 +99,7 @@ def check_permission(permission: str):
     Usage:
         @router.get("/users", dependencies=[Depends(check_permission("system:user:list"))])
     """
-    async def _check_permission(user: User = Depends(get_current_user)) -> User:
+    async def _check_permission(user: "User" = Depends(get_current_user)) -> "User":
         # TODO: 实现权限检查逻辑
         # 从缓存或数据库获取用户权限列表
         # if permission not in user.permissions:
@@ -114,7 +119,7 @@ def check_permissions(permissions: List[str]):
     Returns:
         依赖函数
     """
-    async def _check_permissions(user: User = Depends(get_current_user)) -> User:
+    async def _check_permissions(user: "User" = Depends(get_current_user)) -> "User":
         # TODO: 实现权限检查逻辑
         # user_permissions = await get_user_permissions(user.id)
         # if not any(p in user_permissions for p in permissions):
@@ -134,7 +139,7 @@ def check_role(role_code: str):
     Returns:
         依赖函数
     """
-    async def _check_role(user: User = Depends(get_current_user)) -> User:
+    async def _check_role(user: "User" = Depends(get_current_user)) -> "User":
         # TODO: 实现角色检查逻辑
         return user
 

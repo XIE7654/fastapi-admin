@@ -105,7 +105,7 @@ async def get_user_page(
     )
 
 
-@router.get({"/list-all-simple", "/simple-list"}, summary="获取用户精简信息列表")
+@router.get("/simple-list", summary="获取用户精简信息列表")
 async def get_simple_user_list(
     db: AsyncSession = Depends(get_db),
 ):

@@ -3,8 +3,12 @@
 使用 pydantic-settings 进行环境变量和配置管理
 """
 from typing import Optional, List
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from pydantic import Field
+
+# 项目根目录
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
@@ -92,7 +96,7 @@ class Settings(BaseSettings):
     LOG_FILE: Optional[str] = None
 
     class Config:
-        env_file = ".env"
+        env_file = str(BASE_DIR / ".env")
         env_file_encoding = "utf-8"
         case_sensitive = True
 

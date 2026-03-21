@@ -117,7 +117,7 @@ async def get_dict_type(
     })
 
 
-@router.get({"/type/list-all-simple", "/type/simple-list"}, summary="获得全部字典类型列表")
+@router.get("/type/simple-list", summary="获得全部字典类型列表")
 async def get_simple_dict_type_list(
     db: AsyncSession = Depends(get_db),
 ):
@@ -194,7 +194,7 @@ async def delete_dict_data_list(
     return success(data=True)
 
 
-@router.get({"/data/list-all-simple", "/data/simple-list"}, summary="获得全部字典数据列表")
+@router.get("/data/simple-list", summary="获得全部字典数据列表")
 async def get_simple_dict_data_list(
     db: AsyncSession = Depends(get_db),
 ):

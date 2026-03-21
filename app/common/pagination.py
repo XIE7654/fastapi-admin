@@ -1,7 +1,7 @@
 """
 分页组件
 """
-from typing import Generic, TypeVar, List, Optional
+from typing import Generic, TypeVar, List, Optional, Any
 from dataclasses import dataclass
 from pydantic import BaseModel, Field
 
