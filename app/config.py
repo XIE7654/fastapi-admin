@@ -71,6 +71,8 @@ class Settings(BaseSettings):
         "/admin-api/system/auth/refresh-token",
         "/admin-api/system/captcha/**",
         "/admin-api/infra/file/**",
+        "/admin-api/system/tenant/simple-list",
+        "/admin-api/system/tenant/get-by-website",
     ]
 
     # 安全配置

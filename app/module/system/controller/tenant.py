@@ -13,6 +13,38 @@ from app.common.response import success
 router = APIRouter()
 
 
+@router.get("/simple-list", summary="获取租户精简信息列表")
+async def get_tenant_simple_list(
+    db: AsyncSession = Depends(get_db),
+):
+    """获取租户精简信息列表，只包含被开启的租户，用于首页功能的选择租户选项"""
+    # 只获取状态为0（启用）的租户
+    tenants = await TenantService.get_tenant_list_by_status(db, status=0)
+    return success(data=[
+        {
+            "id": t.id,
+            "name": t.name,
+        }
+        for t in tenants
+    ])
+
+
+@router.get("/get-by-website", summary="根据域名获取租户信息")
+async def get_tenant_by_website(
+    website: str = Query(..., description="域名", regex=r"^[a-zA-Z0-9.-]+$"),
+    db: AsyncSession = Depends(get_db),
+):
+    """根据域名获取租户信息，用于登录界面根据用户的域名获得租户信息"""
+    tenant = await TenantService.get_tenant_by_website(db, website)
+    # 如果租户不存在或被禁用，返回null
+    if not tenant or tenant.status != 0:
+        return success(data=None)
+    return success(data={
+        "id": tenant.id,
+        "name": tenant.name,
+    })
+
+
 @router.get("/list", summary="获取租户列表")
 async def get_tenant_list(
     db: AsyncSession = Depends(get_db),

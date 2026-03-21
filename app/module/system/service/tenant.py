@@ -66,3 +66,24 @@ class TenantService:
             select(Tenant.id).where(Tenant.package_id == package_id)
         )
         return [row[0] for row in result.all()]
+
+    @staticmethod
+    async def get_tenant_list_by_status(db: AsyncSession, status: int) -> List[Tenant]:
+        """根据状态获取租户列表"""
+        result = await db.execute(
+            select(Tenant).where(Tenant.status == status).order_by(Tenant.id.asc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_tenant_by_website(db: AsyncSession, website: str) -> Optional[Tenant]:
+        """根据域名获取租户"""
+        # 使用 FIND_IN_SET 或 LIKE 查询 websites 字段
+        # websites 字段存储的是逗号分隔的域名列表
+        from sqlalchemy import text
+        result = await db.execute(
+            select(Tenant).where(
+                text("FIND_IN_SET(:website, websites) > 0")
+            ).params(website=website)
+        )
+        return result.scalar_one_or_none()
