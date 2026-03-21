@@ -6,29 +6,20 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 
 from jose import jwt, JWTError
-from passlib.context import CryptContext
+import bcrypt
 
 from app.config import settings
-
-# 密码加密上下文
-# 使用 bcrypt 算法，rounds=4 与 ruoyi-vue-pro 的 BCryptPasswordEncoder(strength=4) 保持一致
-# BCryptPasswordEncoder 的 strength 参数对应 passlib 的 rounds 参数
-# rounds=4 表示 2^4=16 轮加密
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=4  # 与 ruoyi-vue-pro 的 passwordEncoderLength=4 保持一致
-)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """验证密码"""
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 def get_password_hash(password: str) -> str:
-    """生成密码哈希"""
-    return pwd_context.hash(password)
+    """生成密码哈希 (rounds=4, 与 ruoyi-vue-pro 的 BCryptPasswordEncoder 保持一致)"""
+    salt = bcrypt.gensalt(rounds=4)
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 
 def create_access_token(
