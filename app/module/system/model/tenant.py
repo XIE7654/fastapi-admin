@@ -22,7 +22,6 @@ class Tenant(Base, TimestampMixin):
     package_id = Column(BigInteger, nullable=True, comment="租户套餐编号")
     expire_time = Column(DateTime, nullable=True, comment="过期时间")
     account_count = Column(Integer, default=0, comment="用户数量")
-    remark = Column(String(256), nullable=True, comment="备注")
 
     def __repr__(self):
         return f"<Tenant(id={self.id}, name={self.name})>"
