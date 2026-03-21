@@ -198,18 +198,17 @@ async def delete_dict_data_list(
 async def get_simple_dict_data_list(
     db: AsyncSession = Depends(get_db),
 ):
-    """获取全部字典数据列表（一般用于管理后台缓存字典数据在本地）"""
-    data_list = await DictService.get_all_dict_data(db)
+    """获取全部字典数据列表（一般用于管理后台缓存字典数据在本地，只返回启用状态的数据）"""
+    data_list = await DictService.get_all_dict_data(db, status=0)
     return success(data=[
         {
-            "id": d.id,
-            "label": d.label,
-            "value": d.value,
             "dictType": d.dict_type,
+            "value": d.value,
+            "label": d.label,
             "colorType": d.color_type,
             "cssClass": d.css_class,
         }
-        for d in data_list if d.status == 0
+        for d in data_list
     ])
 
 

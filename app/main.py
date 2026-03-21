@@ -82,7 +82,7 @@ def register_routers(app: FastAPI):
     """注册所有路由"""
     from app.module.system.controller import (
         auth, user, role, menu, dept, dict, post,
-        log, config, online_user, tenant
+        log, config, online_user, tenant, notify_message
     )
 
     # 认证管理
@@ -117,6 +117,9 @@ def register_routers(app: FastAPI):
 
     # 租户管理
     app.include_router(tenant.router, prefix=f"{settings.API_PREFIX}/system/tenant", tags=["租户管理"])
+
+    # 站内信管理
+    app.include_router(notify_message.router, prefix=f"{settings.API_PREFIX}/system/notify-message", tags=["站内信管理"])
 
 
 # 创建应用实例

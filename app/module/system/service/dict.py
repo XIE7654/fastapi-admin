@@ -67,3 +67,22 @@ class DictService:
             .order_by(DictType.id.asc())
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    async def get_all_dict_data(db: AsyncSession, status: int = None) -> List[DictData]:
+        """
+        获取全部字典数据列表
+
+        Args:
+            db: 数据库会话
+            status: 状态过滤，None 表示不过滤
+
+        Returns:
+            字典数据列表
+        """
+        query = select(DictData).where(DictData.deleted == 0)
+        if status is not None:
+            query = query.where(DictData.status == status)
+        query = query.order_by(DictData.sort.asc())
+        result = await db.execute(query)
+        return list(result.scalars().all())
