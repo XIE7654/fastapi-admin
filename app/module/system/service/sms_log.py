@@ -2,6 +2,7 @@
 短信日志服务
 """
 from typing import Optional, List, Tuple
+from datetime import datetime
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +29,9 @@ class SmsLogService:
         template_id: int = None,
         mobile: str = None,
         send_status: int = None,
-        send_time: list = None,
+        receive_status: int = None,
+        send_time: List[datetime] = None,
+        receive_time: List[datetime] = None,
     ) -> Tuple[List[SmsLog], int]:
         """分页获取短信日志"""
         conditions = []
@@ -41,8 +44,12 @@ class SmsLogService:
             conditions.append(SmsLog.mobile.like(f"%{mobile}%"))
         if send_status is not None:
             conditions.append(SmsLog.send_status == send_status)
+        if receive_status is not None:
+            conditions.append(SmsLog.receive_status == receive_status)
         if send_time and len(send_time) == 2:
             conditions.append(SmsLog.send_time.between(send_time[0], send_time[1]))
+        if receive_time and len(receive_time) == 2:
+            conditions.append(SmsLog.receive_time.between(receive_time[0], receive_time[1]))
 
         # 查询总数
         count_query = select(func.count(SmsLog.id))

@@ -1,7 +1,8 @@
 """
 短信日志控制器
 """
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,17 +15,29 @@ router = APIRouter()
 
 @router.get("/page", summary="获得短信日志分页")
 async def get_sms_log_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    channel_id: int = Query(None, description="渠道编号"),
-    template_id: int = Query(None, description="模板编号"),
+    page_no: int = Query(1, ge=1, alias="pageNo", description="页码"),
+    page_size: int = Query(10, ge=1, le=100, alias="pageSize", description="每页数量"),
+    channel_id: int = Query(None, alias="channelId", description="渠道编号"),
+    template_id: int = Query(None, alias="templateId", description="模板编号"),
     mobile: str = Query(None, description="手机号"),
-    send_status: int = Query(None, description="发送状态"),
+    send_status: int = Query(None, alias="sendStatus", description="发送状态"),
+    receive_status: int = Query(None, alias="receiveStatus", description="接收状态"),
+    send_time: List[datetime] = Query(None, alias="sendTime", description="发送时间"),
+    receive_time: List[datetime] = Query(None, alias="receiveTime", description="接收时间"),
     db: AsyncSession = Depends(get_db),
 ):
     """分页查询短信日志"""
     logs, total = await SmsLogService.get_page(
-        db, page_no, page_size, channel_id, template_id, mobile, send_status
+        db,
+        page_no=page_no,
+        page_size=page_size,
+        channel_id=channel_id,
+        template_id=template_id,
+        mobile=mobile,
+        send_status=send_status,
+        receive_status=receive_status,
+        send_time=send_time,
+        receive_time=receive_time,
     )
     return page_success(
         list_data=[

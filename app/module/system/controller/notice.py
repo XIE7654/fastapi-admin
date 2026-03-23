@@ -76,8 +76,8 @@ async def get_notice(
 
 @router.get("/page", summary="获得通知公告分页")
 async def get_notice_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    page_no: int = Query(1, ge=1, alias="pageNo", description="页码"),
+    page_size: int = Query(10, ge=1, le=100, alias="pageSize", description="每页数量"),
     title: str = Query(None, description="公告标题"),
     type: int = Query(None, description="公告类型"),
     status: int = Query(None, description="状态"),

@@ -96,7 +96,7 @@ def register_routers(app: FastAPI):
     from app.module.system.controller import (
         auth, user, role, menu, dept, dict, post,
         log, config, online_user, tenant, notify_message, tenant_package,
-        sms, mail
+        sms, sms_log, mail, notify_template, notice, area, social
     )
 
     # 认证管理
@@ -141,14 +141,23 @@ def register_routers(app: FastAPI):
     # 租户套餐管理
     app.include_router(tenant_package.router, prefix=f"{settings.API_PREFIX}/system/tenant-package", tags=["租户套餐管理"])
 
-    # 站内信管理
+    # 站内信管理 (用户端操作)
     app.include_router(notify_message.router, prefix=f"{settings.API_PREFIX}/system/notify-message", tags=["站内信管理"])
+
+    # 站内信模板管理
+    app.include_router(notify_template.router_template, prefix=f"{settings.API_PREFIX}/system/notify-template", tags=["站内信模板管理"])
+
+    # 站内信消息管理 (管理端分页)
+    app.include_router(notify_template.router_message, prefix=f"{settings.API_PREFIX}/system/notify-message", tags=["站内信消息管理"])
 
     # 短信渠道管理
     app.include_router(sms.router_channel, prefix=f"{settings.API_PREFIX}/system/sms-channel", tags=["短信渠道管理"])
 
     # 短信模板管理
     app.include_router(sms.router_template, prefix=f"{settings.API_PREFIX}/system/sms-template", tags=["短信模板管理"])
+
+    # 短信日志管理
+    app.include_router(sms_log.router, prefix=f"{settings.API_PREFIX}/system/sms-log", tags=["短信日志管理"])
 
     # 邮箱账号管理
     app.include_router(mail.router_account, prefix=f"{settings.API_PREFIX}/system/mail-account", tags=["邮箱账号管理"])
@@ -158,6 +167,18 @@ def register_routers(app: FastAPI):
 
     # 邮件日志管理
     app.include_router(mail.router_log, prefix=f"{settings.API_PREFIX}/system/mail-log", tags=["邮件日志管理"])
+
+    # 通知公告管理
+    app.include_router(notice.router, prefix=f"{settings.API_PREFIX}/system/notice", tags=["通知公告管理"])
+
+    # 地区管理
+    app.include_router(area.router, prefix=f"{settings.API_PREFIX}/system/area", tags=["地区管理"])
+
+    # 社交客户端管理
+    app.include_router(social.router_client, prefix=f"{settings.API_PREFIX}/system/social-client", tags=["社交客户端管理"])
+
+    # 社交用户管理
+    app.include_router(social.router_user, prefix=f"{settings.API_PREFIX}/system/social-user", tags=["社交用户管理"])
 
 
 # 创建应用实例

@@ -18,11 +18,11 @@ router_user = APIRouter()
 
 @router_client.get("/page", summary="获得社交客户端分页")
 async def get_social_client_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    page_no: int = Query(1, ge=1, alias="pageNo", description="页码"),
+    page_size: int = Query(10, ge=1, le=100, alias="pageSize", description="每页数量"),
     name: str = Query(None, description="应用名"),
-    social_type: int = Query(None, description="社交类型"),
-    user_type: int = Query(None, description="用户类型"),
+    social_type: int = Query(None, alias="socialType", description="社交类型"),
+    user_type: int = Query(None, alias="userType", description="用户类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -77,8 +77,8 @@ async def get_social_client(
 
 @router_user.get("/page", summary="获得社交用户分页")
 async def get_social_user_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    page_no: int = Query(1, ge=1, alias="pageNo", description="页码"),
+    page_size: int = Query(10, ge=1, le=100, alias="pageSize", description="每页数量"),
     type: int = Query(None, description="社交类型"),
     openid: str = Query(None, description="社交openid"),
     nickname: str = Query(None, description="用户昵称"),

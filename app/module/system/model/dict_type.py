@@ -5,10 +5,10 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, BigInteger, SmallInteger
 
-from app.module.system.model.base import Base, TimestampMixin, TenantMixin
+from app.module.system.model.base import Base, TimestampMixin, SoftDeleteMixin
 
 
-class DictType(Base, TimestampMixin):
+class DictType(Base, TimestampMixin, SoftDeleteMixin):
     """字典类型表"""
 
     __tablename__ = "system_dict_type"
