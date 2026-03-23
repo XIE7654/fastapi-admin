@@ -118,9 +118,17 @@ class UserService:
         # 更新字段
         update_data = user_update.model_dump(exclude_unset=True)
 
-        # 处理岗位ID列表
-        if "post_ids" in update_data and update_data["post_ids"]:
-            update_data["post_ids"] = ",".join(str(pid) for pid in update_data["post_ids"])
+        # 处理 gender -> sex 字段映射
+        if "gender" in update_data:
+            update_data["sex"] = update_data.pop("gender")
+
+        # 处理岗位ID列表：将列表转为逗号分隔的字符串
+        if "post_ids" in update_data:
+            if update_data["post_ids"]:
+                update_data["post_ids"] = ",".join(str(pid) for pid in update_data["post_ids"])
+            else:
+                # 空列表转为 None
+                update_data["post_ids"] = None
 
         for key, value in update_data.items():
             if hasattr(user, key):
