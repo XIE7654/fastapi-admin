@@ -23,6 +23,12 @@ class TimestampEncoder(json.JSONEncoder):
         elif isinstance(obj, date):
             # 日期也转为时间戳
             return int(datetime.combine(obj, datetime.min.time()).timestamp() * 1000)
+        elif isinstance(obj, bytes):
+            # bytes 转为字符串或返回 None
+            try:
+                return obj.decode('utf-8')
+            except UnicodeDecodeError:
+                return None
         return super().default(obj)
 
 
@@ -47,6 +53,12 @@ def serialize_data(data: Any) -> Any:
         return int(data.timestamp() * 1000)
     elif isinstance(data, date):
         return int(datetime.combine(data, datetime.min.time()).timestamp() * 1000)
+    elif isinstance(data, bytes):
+        # bytes 转为字符串或返回 None
+        try:
+            return data.decode('utf-8')
+        except UnicodeDecodeError:
+            return None
     return data
 
 
