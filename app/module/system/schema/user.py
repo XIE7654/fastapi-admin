@@ -48,6 +48,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """更新用户请求"""
 
+    id: int = Field(..., description="用户ID")
     nickname: Optional[str] = Field(None, max_length=30, description="用户昵称")
     email: Optional[str] = Field(None, max_length=50, description="邮箱")
     mobile: Optional[str] = Field(None, max_length=20, description="手机号码")
@@ -63,7 +64,6 @@ class UserResponse(UserBase):
 
     id: int = Field(..., description="用户ID")
     avatar: Optional[str] = Field(None, description="头像")
-    dept_name: Optional[str] = Field(None, description="部门名称")
     login_ip: Optional[str] = Field(None, description="最后登录IP")
     login_date: Optional[datetime] = Field(None, description="最后登录时间")
     create_time: Optional[datetime] = Field(None, description="创建时间")
@@ -103,5 +103,5 @@ class UserPasswordUpdate(BaseModel):
 class UserResetPassword(BaseModel):
     """重置密码请求"""
 
-    user_id: int = Field(..., description="用户ID")
+    id: int = Field(..., description="用户ID")
     password: str = Field(..., min_length=6, max_length=20, description="新密码")

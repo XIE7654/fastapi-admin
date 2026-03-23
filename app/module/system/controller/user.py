@@ -40,7 +40,7 @@ async def update_user(
     # _: User = Depends(check_permission("system:user:update")),
 ):
     """更新用户信息"""
-    await UserService.update(db, user_update)
+    await UserService.update(db, user_update.id, user_update)
     return success(data=True)
 
 

@@ -21,13 +21,15 @@ class DeptService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(db: AsyncSession) -> List[Dept]:
+    async def get_all(db: AsyncSession, name: str = None, status: int = None) -> List[Dept]:
         """获取所有部门"""
-        result = await db.execute(
-            select(Dept)
-            .where(Dept.deleted == 0)
-            .order_by(Dept.sort.asc())
-        )
+        query = select(Dept).where(Dept.deleted == 0)
+        if name:
+            query = query.where(Dept.name.like(f"%{name}%"))
+        if status is not None:
+            query = query.where(Dept.status == status)
+        query = query.order_by(Dept.sort.asc())
+        result = await db.execute(query)
         return list(result.scalars().all())
 
     @staticmethod
@@ -46,9 +48,9 @@ class DeptService:
         return result
 
     @staticmethod
-    async def get_dept_tree(db: AsyncSession) -> List[dict]:
+    async def get_dept_tree(db: AsyncSession, name: str = None, status: int = None) -> List[dict]:
         """获取部门树"""
-        depts = await DeptService.get_all(db)
+        depts = await DeptService.get_all(db, name, status)
         return DeptService._build_tree(depts, 0)
 
     @staticmethod

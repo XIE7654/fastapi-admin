@@ -50,6 +50,16 @@ class User(Base, TimestampMixin, TenantMixin):
         """是否是管理员"""
         return self.id == 1
 
+    @property
+    def gender(self) -> int:
+        """性别（兼容 sex 字段）"""
+        return self.sex if self.sex is not None else 0
+
+    @gender.setter
+    def gender(self, value: int):
+        """设置性别"""
+        self.sex = value
+
     def get_post_ids_list(self) -> List[int]:
         """获取岗位ID列表"""
         if not self.post_ids:

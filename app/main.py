@@ -82,7 +82,8 @@ def register_routers(app: FastAPI):
     """注册所有路由"""
     from app.module.system.controller import (
         auth, user, role, menu, dept, dict, post,
-        log, config, online_user, tenant, notify_message, tenant_package
+        log, config, online_user, tenant, notify_message, tenant_package,
+        sms, mail
     )
 
     # 认证管理
@@ -109,8 +110,11 @@ def register_routers(app: FastAPI):
     # 字典数据管理
     app.include_router(dict.router_data, prefix=f"{settings.API_PREFIX}/system/dict-data", tags=["字典数据管理"])
 
-    # 日志管理
-    app.include_router(log.router, prefix=f"{settings.API_PREFIX}/system/log", tags=["日志管理"])
+    # 操作日志
+    app.include_router(log.router_operate, prefix=f"{settings.API_PREFIX}/system/operate-log", tags=["操作日志"])
+
+    # 登录日志
+    app.include_router(log.router_login, prefix=f"{settings.API_PREFIX}/system/login-log", tags=["登录日志"])
 
     # 参数配置
     app.include_router(config.router, prefix=f"{settings.API_PREFIX}/system/config", tags=["参数配置"])
@@ -126,6 +130,21 @@ def register_routers(app: FastAPI):
 
     # 站内信管理
     app.include_router(notify_message.router, prefix=f"{settings.API_PREFIX}/system/notify-message", tags=["站内信管理"])
+
+    # 短信渠道管理
+    app.include_router(sms.router_channel, prefix=f"{settings.API_PREFIX}/system/sms-channel", tags=["短信渠道管理"])
+
+    # 短信模板管理
+    app.include_router(sms.router_template, prefix=f"{settings.API_PREFIX}/system/sms-template", tags=["短信模板管理"])
+
+    # 邮箱账号管理
+    app.include_router(mail.router_account, prefix=f"{settings.API_PREFIX}/system/mail-account", tags=["邮箱账号管理"])
+
+    # 邮件模板管理
+    app.include_router(mail.router_template, prefix=f"{settings.API_PREFIX}/system/mail-template", tags=["邮件模板管理"])
+
+    # 邮件日志管理
+    app.include_router(mail.router_log, prefix=f"{settings.API_PREFIX}/system/mail-log", tags=["邮件日志管理"])
 
 
 # 创建应用实例

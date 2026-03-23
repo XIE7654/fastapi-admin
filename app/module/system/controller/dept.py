@@ -85,6 +85,43 @@ async def get_dept_list(
     ])
 
 
+@router.get("/simple-list", summary="获取部门精简信息列表")
+async def get_simple_dept_list(
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    获取部门精简信息列表
+
+    只包含被开启的部门，主要用于前端的下拉选项
+    无需权限认证
+    """
+    depts = await DeptService.get_all(db, status=0)
+    return success(data=[
+        {
+            "id": d.id,
+            "name": d.name,
+            "parentId": d.parent_id,
+        }
+        for d in depts
+    ])
+
+
+@router.get("/list-all-simple", summary="获取部门精简信息列表")
+async def get_list_all_simple(
+    db: AsyncSession = Depends(get_db),
+):
+    """获取部门精简信息列表（兼容路径）"""
+    depts = await DeptService.get_all(db, status=0)
+    return success(data=[
+        {
+            "id": d.id,
+            "name": d.name,
+            "parentId": d.parent_id,
+        }
+        for d in depts
+    ])
+
+
 @router.get("/tree", summary="获取部门树")
 async def get_dept_tree(
     name: str = Query(None, description="部门名称"),
