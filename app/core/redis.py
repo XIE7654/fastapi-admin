@@ -7,6 +7,12 @@ from redis.asyncio import Redis
 
 from app.config import settings
 
+
+class RedisNotAvailableError(Exception):
+    """Redis 不可用异常"""
+    pass
+
+
 # Redis 连接池
 redis_pool: Optional[redis.ConnectionPool] = None
 redis_client: Optional[Redis] = None
@@ -27,6 +33,9 @@ async def init_redis():
 
     redis_client = Redis(connection_pool=redis_pool)
 
+    # 测试连接
+    await redis_client.ping()
+
 
 async def close_redis():
     """关闭Redis连接"""
@@ -42,10 +51,17 @@ async def get_redis() -> Redis:
     """
     获取Redis客户端
     用于 FastAPI 依赖注入
+
+    :raises RedisNotAvailableError: Redis 未初始化或不可用
     """
     if redis_client is None:
-        raise RuntimeError("Redis not initialized. Call init_redis() first.")
+        raise RedisNotAvailableError("Redis not initialized. Call init_redis() first.")
     return redis_client
+
+
+def is_redis_available() -> bool:
+    """检查 Redis 是否可用"""
+    return redis_client is not None
 
 
 # Redis Key 前缀常量

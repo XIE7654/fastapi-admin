@@ -3,7 +3,7 @@
 """
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.common.pagination import PageQuery
 
@@ -69,6 +69,21 @@ class UserResponse(UserBase):
     create_time: Optional[datetime] = Field(None, description="创建时间")
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_fields(cls, data):
+        """转换数据库字段到schema字段"""
+        # 处理 post_ids: 字符串 -> 列表
+        if hasattr(data, "post_ids") and isinstance(data.post_ids, str):
+            if data.post_ids:
+                data.post_ids = [int(pid) for pid in data.post_ids.split(",") if pid]
+            else:
+                data.post_ids = []
+        # 处理 gender/sex 字段映射
+        if hasattr(data, "sex") and not hasattr(data, "gender"):
+            data.gender = data.sex
+        return data
 
 
 class UserSimpleResponse(BaseModel):

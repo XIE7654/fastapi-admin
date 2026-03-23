@@ -23,11 +23,18 @@ class MenuService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(db: AsyncSession) -> List[Menu]:
+    async def get_all(db: AsyncSession, name: str = None, status: int = None) -> List[Menu]:
         """获取所有菜单"""
-        result = await db.execute(
-            select(Menu).order_by(Menu.sort.asc())
-        )
+        query = select(Menu)
+
+        # 添加过滤条件
+        if name:
+            query = query.where(Menu.name.like(f"%{name}%"))
+        if status is not None:
+            query = query.where(Menu.status == status)
+
+        query = query.order_by(Menu.sort.asc())
+        result = await db.execute(query)
         return list(result.scalars().all())
 
     @staticmethod

@@ -87,7 +87,27 @@ async def get_menu_list(
 ):
     """获取菜单列表"""
     menus = await MenuService.get_all(db, name, status)
-    return success(data=menus)
+    # 序列化菜单列表
+    menu_list = []
+    for menu in menus:
+        menu_list.append({
+            "id": menu.id,
+            "name": menu.name,
+            "permission": menu.permission,
+            "type": menu.type,
+            "sort": menu.sort,
+            "parentId": menu.parent_id,
+            "path": menu.path,
+            "icon": menu.icon,
+            "component": menu.component,
+            "componentName": menu.component_name,
+            "status": menu.status,
+            "visible": menu.visible,
+            "keepAlive": menu.keep_alive,
+            "alwaysShow": menu.always_show,
+            "createTime": menu.create_time.isoformat() if menu.create_time else None,
+        })
+    return success(data=menu_list)
 
 
 @router.get("/get", summary="获得菜单信息")

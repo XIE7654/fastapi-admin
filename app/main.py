@@ -1,6 +1,7 @@
 """
 FastAPI 应用入口
 """
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,13 +16,20 @@ from app.middleware.logging import LoggingMiddleware
 from app.common.response import response_exception_handler
 from app.common.exceptions import BusinessException
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时初始化
     await init_db()
-    await init_redis()
+
+    # Redis 初始化失败不影响服务启动
+    try:
+        await init_redis()
+    except Exception as e:
+        logger.warning(f"Redis 初始化失败，将降级到数据库模式: {e}")
 
     # 初始化定时任务
     init_scheduler()
@@ -35,7 +43,12 @@ async def lifespan(app: FastAPI):
     # 关闭时清理
     shutdown_scheduler()
     await close_db()
-    await close_redis()
+
+    # 关闭 Redis 连接
+    try:
+        await close_redis()
+    except Exception:
+        pass
 
 
 def create_app() -> FastAPI:

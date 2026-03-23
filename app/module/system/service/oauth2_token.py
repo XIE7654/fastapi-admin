@@ -4,6 +4,7 @@ OAuth2 Token 服务
 """
 import json
 import uuid
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from sqlalchemy import select, delete
@@ -12,6 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.module.system.model.oauth2 import OAuth2AccessToken, OAuth2RefreshToken, OAuth2Client
 from app.core.redis import get_redis, RedisKeyPrefix, set_cache, get_cache, delete_cache
 from app.core.exceptions import BusinessException, ErrorCode
+
+logger = logging.getLogger(__name__)
 
 
 # 用户类型枚举
@@ -107,8 +110,7 @@ class OAuth2TokenService:
         db.add(access_token_do)
         await db.flush()
 
-        # 缓存到 Redis
-        redis = await get_redis()
+        # 缓存到 Redis（失败不影响主流程）
         token_data = {
             "id": access_token_do.id,
             "userId": user_id,
@@ -121,11 +123,15 @@ class OAuth2TokenService:
             "expiresTime": access_token_do.expires_time.isoformat(),
             "tenantId": tenant_id,
         }
-        await redis.set(
-            f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}",
-            json.dumps(token_data, ensure_ascii=False),
-            ex=access_token_validity
-        )
+        try:
+            redis = await get_redis()
+            await redis.set(
+                f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}",
+                json.dumps(token_data, ensure_ascii=False),
+                ex=access_token_validity
+            )
+        except Exception as e:
+            logger.warning(f"Redis 缓存 token 失败: {e}")
 
         return access_token_do
 
@@ -137,10 +143,13 @@ class OAuth2TokenService:
         优先从Redis获取，其次从数据库获取
         """
         # 优先从 Redis 获取
-        redis = await get_redis()
-        cached = await redis.get(f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}")
-        if cached:
-            return json.loads(cached)
+        try:
+            redis = await get_redis()
+            cached = await redis.get(f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}")
+            if cached:
+                return json.loads(cached)
+        except Exception as e:
+            logger.warning(f"Redis 获取 token 失败，降级到数据库查询: {e}")
 
         # 从数据库获取
         result = await db.execute(
@@ -157,7 +166,7 @@ class OAuth2TokenService:
         if token_do.expires_time and datetime.now() > token_do.expires_time:
             return None
 
-        # 缓存到 Redis
+        # 缓存到 Redis（失败不影响主流程）
         token_data = {
             "id": token_do.id,
             "userId": token_do.user_id,
@@ -172,11 +181,15 @@ class OAuth2TokenService:
         }
         remaining_seconds = int((token_do.expires_time - datetime.now()).total_seconds())
         if remaining_seconds > 0:
-            await redis.set(
-                f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}",
-                json.dumps(token_data, ensure_ascii=False),
-                ex=remaining_seconds
-            )
+            try:
+                redis = await get_redis()
+                await redis.set(
+                    f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}",
+                    json.dumps(token_data, ensure_ascii=False),
+                    ex=remaining_seconds
+                )
+            except Exception as e:
+                logger.warning(f"Redis 缓存 token 失败: {e}")
 
         return token_data
 
@@ -222,9 +235,12 @@ class OAuth2TokenService:
                 )
             )
 
-        # 从 Redis 删除
-        redis = await get_redis()
-        await redis.delete(f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}")
+        # 从 Redis 删除（失败不影响主流程）
+        try:
+            redis = await get_redis()
+            await redis.delete(f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}")
+        except Exception as e:
+            logger.warning(f"Redis 删除 token 失败: {e}")
 
         return True
 
@@ -288,8 +304,7 @@ class OAuth2TokenService:
         db.add(access_token_do)
         await db.flush()
 
-        # 缓存到 Redis
-        redis = await get_redis()
+        # 缓存到 Redis（失败不影响主流程）
         token_data = {
             "id": access_token_do.id,
             "userId": access_token_do.user_id,
@@ -302,10 +317,14 @@ class OAuth2TokenService:
             "expiresTime": access_token_do.expires_time.isoformat(),
             "tenantId": access_token_do.tenant_id,
         }
-        await redis.set(
-            f"{RedisKeyPrefix.ACCESS_TOKEN}{new_access_token}",
-            json.dumps(token_data, ensure_ascii=False),
-            ex=access_token_validity
-        )
+        try:
+            redis = await get_redis()
+            await redis.set(
+                f"{RedisKeyPrefix.ACCESS_TOKEN}{new_access_token}",
+                json.dumps(token_data, ensure_ascii=False),
+                ex=access_token_validity
+            )
+        except Exception as e:
+            logger.warning(f"Redis 缓存 token 失败: {e}")
 
         return access_token_do
