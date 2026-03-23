@@ -32,7 +32,7 @@ async def get_tenant_simple_list(
 
 @router.get("/get-by-website", summary="根据域名获取租户信息")
 async def get_tenant_by_website(
-    website: str = Query(..., description="域名", regex=r"^[a-zA-Z0-9.-]+$"),
+    website: str = Query(..., description="域名", pattern=r"^[a-zA-Z0-9.-]+$"),
     db: AsyncSession = Depends(get_db),
 ):
     """根据域名获取租户信息，用于登录界面根据用户的域名获得租户信息"""

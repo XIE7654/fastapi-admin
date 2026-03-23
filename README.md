@@ -139,7 +139,7 @@ python scripts/init_db.py
 ```bash
 # 开发模式
 uvicorn app.main:app --reload
-
+#python -m app.main  
 # 生产模式
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```

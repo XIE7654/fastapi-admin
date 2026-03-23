@@ -34,7 +34,7 @@ class AreaUtils:
 
         import os
         csv_path = os.path.join(os.path.dirname(__file__), 'data', 'area.csv')
-
+        print(csv_path, 'csv_path')
         if not os.path.exists(csv_path):
             cls._initialized = True
             return
