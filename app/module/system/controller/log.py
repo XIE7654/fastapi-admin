@@ -85,7 +85,7 @@ async def get_login_log_page(
     log_type: int = Query(None, description="日志类型"),
     result: int = Query(None, description="结果码"),
     user_ip: str = Query(None, description="用户IP"),
-    login_time: List[str] = Query(None, description="登录时间范围"),
+    create_time: List[str] = Query(None, description="登录时间范围"),
     db: AsyncSession = Depends(get_db),
     # _: User = Depends(check_permission("system:login-log:query")),
 ):
@@ -98,7 +98,7 @@ async def get_login_log_page(
         log_type=log_type,
         result=result,
         user_ip=user_ip,
-        login_time=login_time,
+        create_time=create_time,
     )
     logs, total = await LoginLogService.get_list(db, query)
     return page_success(

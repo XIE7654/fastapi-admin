@@ -5,10 +5,10 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, BigInteger, SmallInteger
 
-from app.module.system.model.base import Base, TenantMixin
+from app.module.system.model.base import Base, TenantMixin, TimestampMixin
 
 
-class LoginLog(Base, TenantMixin):
+class LoginLog(Base, TenantMixin, TimestampMixin):
     """登录日志表"""
 
     __tablename__ = "system_login_log"
@@ -28,6 +28,3 @@ class LoginLog(Base, TenantMixin):
     # 客户端信息
     user_ip = Column(String(50), nullable=True, comment="用户IP")
     user_agent = Column(String(512), nullable=True, comment="浏览器UA")
-
-    # 时间
-    login_time = Column(DateTime, default=datetime.now, comment="登录时间")

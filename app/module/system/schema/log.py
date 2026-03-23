@@ -54,7 +54,7 @@ class LoginLogResponse(BaseModel):
     result: Optional[int] = Field(None, description="结果码")
     user_ip: Optional[str] = Field(None, description="用户IP")
     user_agent: Optional[str] = Field(None, description="浏览器UA")
-    login_time: Optional[datetime] = Field(None, description="登录时间")
+    create_time: Optional[datetime] = Field(None, description="登录时间")
 
     model_config = {"from_attributes": True}
 
@@ -67,4 +67,4 @@ class LoginLogPageQuery(PageQuery):
     log_type: Optional[int] = Field(None, description="日志类型")
     result: Optional[int] = Field(None, description="结果码")
     user_ip: Optional[str] = Field(None, description="用户IP")
-    login_time: Optional[List[datetime]] = Field(None, description="登录时间范围")
+    create_time: Optional[List[datetime]] = Field(None, description="登录时间范围")

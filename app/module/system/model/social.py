@@ -15,11 +15,11 @@ class SocialClient(Base, TimestampMixin):
     name = Column(String(63), nullable=False, comment="应用名")
     social_type = Column(SmallInteger, nullable=False, comment="社交类型")
     user_type = Column(SmallInteger, nullable=False, comment="用户类型")
+    status = Column(SmallInteger, nullable=False, comment="状态")
     client_id = Column(String(255), nullable=False, comment="客户端ID")
     client_secret = Column(String(255), nullable=False, comment="客户端密钥")
     agent_id = Column(String(64), nullable=True, comment="代理编号")
-    status = Column(SmallInteger, nullable=False, comment="状态")
-    remark = Column(String(255), nullable=True, comment="备注")
+    public_key = Column(String(256), nullable=True, comment="公钥")
 
 
 class SocialUser(Base, TimestampMixin):

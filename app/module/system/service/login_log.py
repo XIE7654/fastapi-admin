@@ -36,7 +36,6 @@ class LoginLogService:
             user_ip=user_ip,
             user_agent=user_agent,
             result=result,
-            login_time=datetime.now(),
             tenant_id=tenant_id or 1,
         )
         db.add(log)
@@ -58,8 +57,8 @@ class LoginLogService:
             conditions.append(LoginLog.result == query.result)
         if query.user_ip:
             conditions.append(LoginLog.user_ip.like(f"%{query.user_ip}%"))
-        if query.login_time and len(query.login_time) == 2:
-            conditions.append(LoginLog.login_time.between(query.login_time[0], query.login_time[1]))
+        if query.create_time and len(query.create_time) == 2:
+            conditions.append(LoginLog.create_time.between(query.create_time[0], query.create_time[1]))
 
         # 查询总数
         count_query = select(func.count()).select_from(LoginLog).where(and_(*conditions))

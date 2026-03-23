@@ -48,16 +48,20 @@ class SmsLog(Base, TimestampMixin):
     template_type = Column(SmallInteger, nullable=False, comment="模板类型")
     template_content = Column(String(500), nullable=False, comment="模板内容")
     template_params = Column(String(255), nullable=False, comment="模板参数")
+    api_template_id = Column(String(63), nullable=True, comment="短信API的模板编号")
     mobile = Column(String(11), nullable=False, comment="手机号")
     user_id = Column(BigInteger, nullable=True, comment="用户编号")
     user_type = Column(SmallInteger, nullable=True, comment="用户类型")
     send_status = Column(SmallInteger, nullable=False, default=0, comment="发送状态")
     send_time = Column(DateTime, nullable=True, comment="发送时间")
-    api_code = Column(Integer, nullable=True, comment="API发送编码")
-    api_msg = Column(String(255), nullable=True, comment="API发送信息")
+    api_send_code = Column(String(63), nullable=True, comment="API发送编码")
+    api_send_msg = Column(String(255), nullable=True, comment="API发送信息")
     api_request_id = Column(String(255), nullable=True, comment="API请求ID")
+    api_serial_no = Column(String(255), nullable=True, comment="API发送序号")
     receive_status = Column(SmallInteger, nullable=False, default=0, comment="接收状态")
     receive_time = Column(DateTime, nullable=True, comment="接收时间")
+    api_receive_code = Column(String(63), nullable=True, comment="API接收编码")
+    api_receive_msg = Column(String(255), nullable=True, comment="API接收信息")
 
 
 class SmsCode(Base, TenantMixin):
