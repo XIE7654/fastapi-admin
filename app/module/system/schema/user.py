@@ -76,10 +76,19 @@ class UserResponse(UserBase):
         """转换数据库字段到schema字段"""
         # 处理 post_ids: 字符串 -> 列表
         if hasattr(data, "post_ids") and isinstance(data.post_ids, str):
-            if data.post_ids:
-                data.post_ids = [int(pid) for pid in data.post_ids.split(",") if pid]
-            else:
+            post_ids_str = data.post_ids.strip()
+            if not post_ids_str:
                 data.post_ids = []
+            elif post_ids_str.startswith("["):
+                # JSON 数组格式: "[]" 或 "[1,2,3]"
+                import json
+                try:
+                    data.post_ids = json.loads(post_ids_str)
+                except json.JSONDecodeError:
+                    data.post_ids = []
+            else:
+                # 逗号分隔格式: "1,2,3"
+                data.post_ids = [int(pid) for pid in post_ids_str.split(",") if pid.strip()]
         # 处理 gender/sex 字段映射
         if hasattr(data, "sex") and not hasattr(data, "gender"):
             data.gender = data.sex

@@ -96,7 +96,7 @@ def register_routers(app: FastAPI):
     from app.module.system.controller import (
         auth, user, role, menu, dept, dict, post,
         log, config, online_user, tenant, notify_message, tenant_package,
-        sms, sms_log, mail, notify_template, notice, area, social
+        sms, sms_log, mail, notify_template, notice, area, social, oauth2
     )
 
     # 认证管理
@@ -179,6 +179,12 @@ def register_routers(app: FastAPI):
 
     # 社交用户管理
     app.include_router(social.router_user, prefix=f"{settings.API_PREFIX}/system/social-user", tags=["社交用户管理"])
+
+    # OAuth2客户端管理
+    app.include_router(oauth2.router_client, prefix=f"{settings.API_PREFIX}/system/oauth2-client", tags=["OAuth2客户端管理"])
+
+    # OAuth2令牌管理
+    app.include_router(oauth2.router_token, prefix=f"{settings.API_PREFIX}/system/oauth2-token", tags=["OAuth2令牌管理"])
 
 
 # 创建应用实例
