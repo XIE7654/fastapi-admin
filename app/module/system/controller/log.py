@@ -32,12 +32,10 @@ router_login = APIRouter()
 async def get_operate_log_page(
     page_no: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    module: str = Query(None, description="操作模块"),
     user_id: int = Query(None, description="用户编号"),
-    user_name: str = Query(None, description="用户名"),
-    type: int = Query(None, description="操作类型"),
-    result_code: int = Query(None, description="结果码"),
-    start_time: List[str] = Query(None, description="开始时间范围"),
+    type: str = Query(None, description="操作模块类型"),
+    sub_type: str = Query(None, description="操作名"),
+    create_time: List[str] = Query(None, description="创建时间范围"),
     db: AsyncSession = Depends(get_db),
     # _: User = Depends(check_permission("system:operate-log:query")),
 ):
@@ -45,12 +43,10 @@ async def get_operate_log_page(
     query = OperateLogPageQuery(
         page_no=page_no,
         page_size=page_size,
-        module=module,
         user_id=user_id,
-        user_name=user_name,
         type=type,
-        result_code=result_code,
-        start_time=start_time,
+        sub_type=sub_type,
+        create_time=create_time,
     )
     logs, total = await OperateLogService.get_list(db, query)
     return page_success(
@@ -87,7 +83,7 @@ async def get_login_log_page(
     user_id: int = Query(None, description="用户编号"),
     username: str = Query(None, description="用户名"),
     log_type: int = Query(None, description="日志类型"),
-    result_code: int = Query(None, description="结果码"),
+    result: int = Query(None, description="结果码"),
     user_ip: str = Query(None, description="用户IP"),
     login_time: List[str] = Query(None, description="登录时间范围"),
     db: AsyncSession = Depends(get_db),
@@ -100,7 +96,7 @@ async def get_login_log_page(
         user_id=user_id,
         username=username,
         log_type=log_type,
-        result_code=result_code,
+        result=result,
         user_ip=user_ip,
         login_time=login_time,
     )

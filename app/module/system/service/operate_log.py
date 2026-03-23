@@ -1,11 +1,7 @@
 """
 操作日志服务
 """
-import json
-import time
 from typing import Optional, List, Tuple
-from datetime import datetime
-from functools import wraps
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,38 +16,34 @@ class OperateLogService:
     @staticmethod
     async def create(
         db: AsyncSession,
-        module: str,
-        name: str,
-        request_method: str,
-        request_url: str,
-        request_params: dict = None,
-        user_id: int = None,
-        user_name: str = None,
+        user_id: int,
+        user_type: int,
+        type: str,
+        sub_type: str,
+        biz_id: int = 0,
+        action: str = None,
+        extra: str = None,
+        request_method: str = None,
+        request_url: str = None,
         user_ip: str = None,
         user_agent: str = None,
-        start_time: datetime = None,
-        duration: int = None,
-        result_code: int = 0,
-        result_msg: str = None,
         tenant_id: int = None,
     ) -> OperateLog:
         """创建操作日志"""
         log = OperateLog(
-            module=module,
-            name=name,
+            trace_id=str(generate_snowflake_id()),
+            user_id=user_id,
+            user_type=user_type,
+            type=type,
+            sub_type=sub_type,
+            biz_id=biz_id,
+            action=action,
+            extra=extra,
             request_method=request_method,
             request_url=request_url,
-            request_params=json.dumps(request_params, ensure_ascii=False) if request_params else None,
-            user_id=user_id,
-            user_name=user_name,
             user_ip=user_ip,
             user_agent=user_agent,
-            start_time=start_time,
-            duration=duration,
-            result_code=result_code,
-            result_msg=result_msg,
             tenant_id=tenant_id or 1,
-            trace_id=str(generate_snowflake_id()),
         )
         db.add(log)
         await db.flush()
@@ -62,18 +54,14 @@ class OperateLogService:
         """分页查询操作日志"""
         conditions = [OperateLog.deleted == 0]
 
-        if query.module:
-            conditions.append(OperateLog.module.like(f"%{query.module}%"))
         if query.user_id:
             conditions.append(OperateLog.user_id == query.user_id)
-        if query.user_name:
-            conditions.append(OperateLog.user_name.like(f"%{query.user_name}%"))
-        if query.type is not None:
-            conditions.append(OperateLog.type == query.type)
-        if query.result_code is not None:
-            conditions.append(OperateLog.result_code == query.result_code)
-        if query.start_time and len(query.start_time) == 2:
-            conditions.append(OperateLog.start_time.between(query.start_time[0], query.start_time[1]))
+        if query.type:
+            conditions.append(OperateLog.type.like(f"%{query.type}%"))
+        if query.sub_type:
+            conditions.append(OperateLog.sub_type.like(f"%{query.sub_type}%"))
+        if query.create_time and len(query.create_time) == 2:
+            conditions.append(OperateLog.create_time.between(query.create_time[0], query.create_time[1]))
 
         # 查询总数
         count_query = select(func.count()).select_from(OperateLog).where(and_(*conditions))
@@ -106,41 +94,3 @@ class OperateLogService:
                 count += 1
         await db.flush()
         return count
-
-
-def log_operation(module: str, name: str, type: int = 0):
-    """
-    操作日志装饰器
-
-    用法:
-        @log_operation(module="用户管理", name="创建用户")
-        async def create_user(...):
-            ...
-    """
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            start_time = datetime.now()
-            result_code = 0
-            result_msg = "成功"
-            result_data = None
-
-            try:
-                result = await func(*args, **kwargs)
-                # 如果返回的是字典且包含code，则使用其结果码
-                if isinstance(result, dict):
-                    result_code = result.get("code", 0)
-                    result_msg = result.get("msg", "成功")
-                return result
-            except Exception as e:
-                result_code = 500
-                result_msg = str(e)
-                raise
-            finally:
-                duration = int((datetime.now() - start_time).total_seconds() * 1000)
-
-                # 异步写入日志（需要在请求上下文中获取db session）
-                # 这里只是记录时间，实际写入在中间件或依赖中完成
-
-        return wrapper
-    return decorator

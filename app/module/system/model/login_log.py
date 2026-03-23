@@ -22,16 +22,12 @@ class LoginLog(Base, TenantMixin):
     username = Column(String(50), nullable=True, comment="用户账号")
     user_type = Column(SmallInteger, default=2, comment="用户类型: 1-管理员, 2-普通用户")
 
-    # 登录信息
-    result_code = Column(Integer, default=0, comment="结果码")
-    result_msg = Column(String(255), nullable=True, comment="结果提示")
+    # 登录结果
+    result = Column(Integer, default=0, comment="结果码")
 
     # 客户端信息
     user_ip = Column(String(50), nullable=True, comment="用户IP")
-    user_ip_area = Column(String(100), nullable=True, comment="用户IP地区")
     user_agent = Column(String(512), nullable=True, comment="浏览器UA")
-    browser = Column(String(50), nullable=True, comment="浏览器名")
-    os = Column(String(50), nullable=True, comment="操作系统")
 
     # 时间
     login_time = Column(DateTime, default=datetime.now, comment="登录时间")

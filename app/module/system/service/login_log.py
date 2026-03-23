@@ -10,51 +10,6 @@ from app.module.system.model.login_log import LoginLog
 from app.module.system.schema.log import LoginLogPageQuery
 
 
-def parse_user_agent(user_agent: str) -> tuple:
-    """
-    解析User-Agent字符串
-
-    Returns:
-        (browser, os) 浏览器和操作系统信息
-    """
-    if not user_agent:
-        return None, None
-
-    browser = None
-    os_info = None
-
-    # 简单的User-Agent解析
-    ua_lower = user_agent.lower()
-
-    # 浏览器检测
-    if "edg/" in ua_lower:
-        browser = "Edge"
-    elif "chrome/" in ua_lower:
-        browser = "Chrome"
-    elif "firefox/" in ua_lower:
-        browser = "Firefox"
-    elif "safari/" in ua_lower and "chrome" not in ua_lower:
-        browser = "Safari"
-    elif "opera/" in ua_lower or "opr/" in ua_lower:
-        browser = "Opera"
-    elif "msie" in ua_lower or "trident/" in ua_lower:
-        browser = "IE"
-
-    # 操作系统检测
-    if "windows" in ua_lower:
-        os_info = "Windows"
-    elif "mac os" in ua_lower:
-        os_info = "MacOS"
-    elif "linux" in ua_lower:
-        os_info = "Linux"
-    elif "android" in ua_lower:
-        os_info = "Android"
-    elif "iphone" in ua_lower or "ipad" in ua_lower:
-        os_info = "iOS"
-
-    return browser, os_info
-
-
 class LoginLogService:
     """登录日志服务"""
 
@@ -70,24 +25,17 @@ class LoginLogService:
         username: str,
         user_ip: str,
         user_agent: str,
-        result_code: int = 0,
-        result_msg: str = "成功",
+        result: int = 0,
         tenant_id: int = None,
     ) -> LoginLog:
         """创建登录日志"""
-        # 解析User-Agent
-        browser, os_info = parse_user_agent(user_agent)
-
         log = LoginLog(
             log_type=log_type,
             user_id=user_id,
             username=username,
             user_ip=user_ip,
             user_agent=user_agent,
-            browser=browser,
-            os=os_info,
-            result_code=result_code,
-            result_msg=result_msg,
+            result=result,
             login_time=datetime.now(),
             tenant_id=tenant_id or 1,
         )
@@ -106,8 +54,8 @@ class LoginLogService:
             conditions.append(LoginLog.username.like(f"%{query.username}%"))
         if query.log_type:
             conditions.append(LoginLog.log_type == query.log_type)
-        if query.result_code is not None:
-            conditions.append(LoginLog.result_code == query.result_code)
+        if query.result is not None:
+            conditions.append(LoginLog.result == query.result)
         if query.user_ip:
             conditions.append(LoginLog.user_ip.like(f"%{query.user_ip}%"))
         if query.login_time and len(query.login_time) == 2:
@@ -137,8 +85,7 @@ class LoginLogService:
         username: str,
         user_ip: str,
         user_agent: str,
-        result_code: int = 0,
-        result_msg: str = "登录成功",
+        result: int = 0,
         tenant_id: int = None,
     ) -> LoginLog:
         """创建登录日志"""
@@ -149,8 +96,7 @@ class LoginLogService:
             username=username,
             user_ip=user_ip,
             user_agent=user_agent,
-            result_code=result_code,
-            result_msg=result_msg,
+            result=result,
             tenant_id=tenant_id,
         )
 
@@ -171,7 +117,6 @@ class LoginLogService:
             username=username,
             user_ip=user_ip,
             user_agent=user_agent,
-            result_code=0,
-            result_msg="登出成功",
+            result=0,
             tenant_id=tenant_id,
         )
