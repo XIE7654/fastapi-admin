@@ -3,19 +3,27 @@
 """
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, AliasGenerator
 
-from app.common.pagination import PageQuery
+from app.common.pagination import PageQuery, to_camel
 
 
 class UserBase(BaseModel):
     """用户基础信息"""
 
+    model_config = {
+        "populate_by_name": True,  # 允许通过字段名或别名访问
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,  # 序列化时使用驼峰
+            validation_alias=to_camel,     # 反序列化时接受驼峰
+        ),
+    }
+
     username: Optional[str] = Field(None, max_length=30, description="用户账号")
     nickname: Optional[str] = Field(None, max_length=30, description="用户昵称")
     email: Optional[str] = Field(None, max_length=50, description="邮箱")
     mobile: Optional[str] = Field(None, max_length=20, description="手机号码")
-    gender: Optional[int] = Field(default=0, ge=0, le=2, description="性别: 0-未知, 1-男, 2-女")
+    gender: Optional[int] = Field(default=0, ge=0, le=2, validation_alias="sex", description="性别: 0-未知, 1-男, 2-女")
     dept_id: Optional[int] = Field(None, description="部门ID")
     post_ids: Optional[List[int]] = Field(None, description="岗位ID列表")
     status: Optional[int] = Field(default=0, ge=0, le=1, description="状态: 0-正常, 1-禁用")
@@ -48,11 +56,19 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """更新用户请求"""
 
+    model_config = {
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
+
     id: int = Field(..., description="用户ID")
     nickname: Optional[str] = Field(None, max_length=30, description="用户昵称")
     email: Optional[str] = Field(None, max_length=50, description="邮箱")
     mobile: Optional[str] = Field(None, max_length=20, description="手机号码")
-    gender: Optional[int] = Field(None, ge=0, le=2, description="性别")
+    gender: Optional[int] = Field(None, ge=0, le=2, validation_alias="sex", description="性别")
     dept_id: Optional[int] = Field(None, description="部门ID")
     post_ids: Optional[List[int]] = Field(None, description="岗位ID列表")
     status: Optional[int] = Field(None, ge=0, le=1, description="状态")
@@ -68,7 +84,14 @@ class UserResponse(UserBase):
     login_date: Optional[datetime] = Field(None, description="最后登录时间")
     create_time: Optional[datetime] = Field(None, description="创建时间")
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
 
     @model_validator(mode="before")
     @classmethod
@@ -98,12 +121,19 @@ class UserResponse(UserBase):
 class UserSimpleResponse(BaseModel):
     """用户简要响应"""
 
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
+
     id: int = Field(..., description="用户ID")
     username: str = Field(..., description="用户账号")
     nickname: str = Field(..., description="用户昵称")
     dept_id: Optional[int] = Field(None, description="部门ID")
-
-    model_config = {"from_attributes": True}
 
 
 class UserPageQuery(PageQuery):
@@ -120,6 +150,14 @@ class UserPageQuery(PageQuery):
 class UserPasswordUpdate(BaseModel):
     """修改密码请求"""
 
+    model_config = {
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
+
     old_password: str = Field(..., description="旧密码")
     new_password: str = Field(..., min_length=6, max_length=20, description="新密码")
 
@@ -127,5 +165,28 @@ class UserPasswordUpdate(BaseModel):
 class UserResetPassword(BaseModel):
     """重置密码请求"""
 
+    model_config = {
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
+
     id: int = Field(..., description="用户ID")
     password: str = Field(..., min_length=6, max_length=20, description="新密码")
+
+
+class UserUpdateStatus(BaseModel):
+    """更新用户状态请求"""
+
+    model_config = {
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
+
+    id: int = Field(..., description="用户ID")
+    status: int = Field(..., ge=0, le=1, description="状态: 0-正常, 1-禁用")

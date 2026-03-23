@@ -3,9 +3,15 @@
 """
 from typing import Generic, TypeVar, List, Optional, Any
 from dataclasses import dataclass
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AliasGenerator
 
 T = TypeVar("T")
+
+
+def to_camel(string: str) -> str:
+    """将下划线命名转换为驼峰命名"""
+    components = string.split('_')
+    return components[0] + ''.join(x.title() for x in components[1:])
 
 
 @dataclass
@@ -44,6 +50,14 @@ class PageResult(Generic[T]):
 class PageQuery(BaseModel):
     """分页查询参数"""
 
+    model_config = {
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
+
     page_no: int = Field(default=1, ge=1, description="页码，从1开始")
     page_size: int = Field(default=10, ge=1, le=100, description="每页大小")
 
@@ -60,6 +74,14 @@ class PageQuery(BaseModel):
 
 class SortQuery(BaseModel):
     """排序查询参数"""
+
+    model_config = {
+        "populate_by_name": True,
+        "alias_generator": AliasGenerator(
+            serialization_alias=to_camel,
+            validation_alias=to_camel,
+        ),
+    }
 
     sort_field: Optional[str] = Field(default=None, description="排序字段")
     sort_order: Optional[str] = Field(default="asc", description="排序方向: asc/desc")

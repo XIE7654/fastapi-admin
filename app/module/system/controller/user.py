@@ -16,6 +16,7 @@ from app.module.system.schema.user import (
     UserPageQuery,
     UserPasswordUpdate,
     UserResetPassword,
+    UserUpdateStatus,
 )
 from app.common.response import success, error, page_success
 
@@ -79,13 +80,12 @@ async def update_user_password(
 
 @router.put("/update-status", summary="修改用户状态")
 async def update_user_status(
-    id: int = Query(..., description="用户ID"),
-    status: int = Query(..., ge=0, le=1, description="状态"),
+    req: UserUpdateStatus,
     db: AsyncSession = Depends(get_db),
     # _: User = Depends(check_permission("system:user:update")),
 ):
     """更新用户状态（启用/禁用）"""
-    await UserService.update_status(db, id, status)
+    await UserService.update_status(db, req.id, req.status)
     return success(data=True)
 
 
