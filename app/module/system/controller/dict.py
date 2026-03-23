@@ -27,6 +27,7 @@ async def create_dict_type(
     status: int = Query(0, description="状态"),
     remark: str = Query("", description="备注"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:create")),
 ):
     """创建字典类型"""
     dict_type_id = await DictService.create_dict_type(db, name, type, status, remark)
@@ -41,6 +42,7 @@ async def update_dict_type(
     status: int = Query(None, description="状态"),
     remark: str = Query(None, description="备注"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:update")),
 ):
     """更新字典类型"""
     await DictService.update_dict_type(db, id, name, type, status, remark)
@@ -51,6 +53,7 @@ async def update_dict_type(
 async def delete_dict_type(
     id: int = Query(..., description="字典类型ID"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:delete")),
 ):
     """删除字典类型"""
     await DictService.delete_dict_type(db, id)
@@ -61,6 +64,7 @@ async def delete_dict_type(
 async def delete_dict_type_list(
     ids: List[int] = Query(..., description="字典类型ID列表"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:delete")),
 ):
     """批量删除字典类型"""
     await DictService.delete_dict_type_list(db, ids)
@@ -75,6 +79,7 @@ async def get_dict_type_page(
     type: str = Query(None, description="字典类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典类型列表"""
     types, total = await DictService.get_dict_type_page(db, page_no, page_size, name, type, status)
@@ -100,6 +105,7 @@ async def get_dict_type_page(
 async def get_dict_type(
     id: int = Query(..., description="字典类型ID"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:query")),
 ):
     """根据ID获取字典类型详情"""
     dict_type = await DictService.get_dict_type_by_id(db, id)
@@ -119,7 +125,7 @@ async def get_dict_type(
 async def get_simple_dict_type_list(
     db: AsyncSession = Depends(get_db),
 ):
-    """获取全部字典类型列表（包括开启 + 禁用的字典类型，主要用于前端的下拉选项）"""
+    """获取全部字典类型列表（包括开启 + 禁用的字典类型，主要用于前端的下拉选项）无需登录认证"""
     types = await DictService.get_all_dict_types(db)
     return success(data=[
         {"id": t.id, "name": t.name, "type": t.type}
@@ -140,6 +146,7 @@ async def create_dict_data(
     css_class: str = Query(None, description="CSS类名"),
     remark: str = Query("", description="备注"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:create")),
 ):
     """创建字典数据"""
     dict_data_id = await DictService.create_dict_data(
@@ -160,6 +167,7 @@ async def update_dict_data(
     css_class: str = Query(None, description="CSS类名"),
     remark: str = Query(None, description="备注"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:update")),
 ):
     """更新字典数据"""
     await DictService.update_dict_data(
@@ -172,6 +180,7 @@ async def update_dict_data(
 async def delete_dict_data(
     id: int = Query(..., description="字典数据ID"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:delete")),
 ):
     """删除字典数据"""
     await DictService.delete_dict_data(db, id)
@@ -182,6 +191,7 @@ async def delete_dict_data(
 async def delete_dict_data_list(
     ids: List[int] = Query(..., description="字典数据ID列表"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:delete")),
 ):
     """批量删除字典数据"""
     await DictService.delete_dict_data_list(db, ids)
@@ -192,7 +202,7 @@ async def delete_dict_data_list(
 async def get_simple_dict_data_list(
     db: AsyncSession = Depends(get_db),
 ):
-    """获取全部字典数据列表（一般用于管理后台缓存字典数据在本地，只返回启用状态的数据）"""
+    """获取全部字典数据列表（一般用于管理后台缓存字典数据在本地，只返回启用状态的数据）无需登录认证"""
     data_list = await DictService.get_all_dict_data(db, status=0)
     return success(data=[
         {
@@ -213,6 +223,7 @@ async def get_dict_data_page(
     dict_type: str = Query(None, description="字典类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典数据列表"""
     data_list, total = await DictService.get_dict_data_page(db, page_no, page_size, dict_type, status)
@@ -242,6 +253,7 @@ async def get_dict_data_page(
 async def get_dict_data(
     id: int = Query(..., description="字典数据ID"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:query")),
 ):
     """根据ID获取字典数据详情"""
     dict_data = await DictService.get_dict_data_by_id(db, id)

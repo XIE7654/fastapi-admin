@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/list", summary="获取在线用户列表")
 async def get_online_users(
     user_id: int = Query(None, description="用户ID"),
-    # _: User = Depends(check_permission("system:online-user:list")),
+    _: User = Depends(check_permission("system:online-user:query")),
 ):
     """获取在线用户列表"""
     users = await OnlineUserService.get_online_users(user_id)
@@ -28,7 +28,7 @@ async def get_online_users(
 async def kick_user(
     user_id: int = Query(..., description="用户ID"),
     token: str = Query(None, description="指定Token，不传则踢出所有会话"),
-    # _: User = Depends(check_permission("system:online-user:kick")),
+    _: User = Depends(check_permission("system:oauth2-token:delete")),
 ):
     """踢出在线用户"""
     count = await OnlineUserService.kick_user(user_id, token)

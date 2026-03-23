@@ -28,7 +28,7 @@ async def get_sms_channel_page(
     signature: str = Query(None, description="短信签名"),
     code: str = Query(None, description="渠道编码"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:sms-channel:query")),
+    _: User = Depends(check_permission("system:sms-channel:query")),
 ):
     """分页查询短信渠道"""
     channels, total = await SmsChannelService.get_page(
@@ -58,6 +58,7 @@ async def get_sms_channel_page(
 @router_channel.get("/simple-list", summary="获得短信渠道精简列表")
 async def get_simple_sms_channel_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取短信渠道精简列表，包含被禁用的短信渠道"""
     channels = await SmsChannelService.get_all(db)
@@ -74,6 +75,7 @@ async def get_simple_sms_channel_list(
 @router_channel.get("/list-all-simple", summary="获得短信渠道精简列表")
 async def get_list_all_simple(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取短信渠道精简列表（兼容路径）"""
     channels = await SmsChannelService.get_all(db)
@@ -91,6 +93,7 @@ async def get_list_all_simple(
 async def get_sms_channel(
     id: int = Query(..., description="渠道编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-channel:query")),
 ):
     """根据ID获取短信渠道详情"""
     channel = await SmsChannelService.get_by_id(db, id)
@@ -120,7 +123,7 @@ async def get_sms_template_page(
     code: str = Query(None, description="模板编码"),
     channel_id: int = Query(None, description="短信渠道编号"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:sms-template:query")),
+    _: User = Depends(check_permission("system:sms-template:query")),
 ):
     """分页查询短信模板"""
     templates, total = await SmsTemplateService.get_page(
@@ -152,6 +155,7 @@ async def get_sms_template_page(
 async def get_sms_template(
     id: int = Query(..., description="模板编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-template:query")),
 ):
     """根据ID获取短信模板详情"""
     template = await SmsTemplateService.get_by_id(db, id)

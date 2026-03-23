@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.dependencies import check_permission
+from app.module.system.model.user import User
 from app.module.system.service.oauth2_client import OAuth2ClientService, OAuth2AccessTokenService
 from app.common.response import success, page_success
 
@@ -23,6 +25,7 @@ async def get_oauth2_client_page(
     name: str = Query(None, description="应用名"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:oauth2-client:query")),
 ):
     """分页查询OAuth2客户端"""
     clients, total = await OAuth2ClientService.get_page(
@@ -61,6 +64,7 @@ async def get_oauth2_client_page(
 async def get_oauth2_client(
     id: int = Query(..., description="客户端编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:oauth2-client:query")),
 ):
     """根据ID获取OAuth2客户端详情"""
     client = await OAuth2ClientService.get_by_id(db, id)
@@ -95,6 +99,7 @@ async def get_oauth2_token_page(
     user_type: int = Query(None, description="用户类型"),
     client_id: str = Query(None, description="客户端编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:oauth2-token:page")),
 ):
     """分页查询访问令牌，只返回有效期内的"""
     tokens, total = await OAuth2AccessTokenService.get_page(

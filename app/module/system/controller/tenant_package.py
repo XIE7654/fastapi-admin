@@ -17,12 +17,13 @@ router = APIRouter()
 @router.get("/get-simple-list", summary="获取租户套餐精简信息列表")
 async def get_tenant_package_simple_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     获取租户套餐精简信息列表
 
     只包含被开启的租户套餐，主要用于前端的下拉选项
-    无需权限认证
+    需要登录认证
     """
     packages = await TenantPackageService.get_list_by_status(db, status=0)
     return success(data=[
@@ -37,6 +38,7 @@ async def get_tenant_package_simple_list(
 @router.get("/simple-list", summary="获取租户套餐精简信息列表")
 async def get_simple_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取租户套餐精简信息列表（兼容路径）"""
     packages = await TenantPackageService.get_list_by_status(db, status=0)
@@ -56,7 +58,7 @@ async def get_tenant_package_page(
     name: str = Query(None, description="套餐名称"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant-package:query")),
+    _: User = Depends(check_permission("system:tenant-package:query")),
 ):
     """分页查询租户套餐列表"""
     packages, total = await TenantPackageService.get_page(db, page_no, page_size, name, status)
@@ -82,7 +84,7 @@ async def get_tenant_package_page(
 async def get_tenant_package(
     id: int = Query(..., description="套餐编号"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant-package:query")),
+    _: User = Depends(check_permission("system:tenant-package:query")),
 ):
     """根据ID获取租户套餐详情"""
     package = await TenantPackageService.get_by_id(db, id)
@@ -105,7 +107,7 @@ async def create_tenant_package(
     remark: str = Query(None, description="备注"),
     menu_ids: str = Query(None, description="关联的菜单编号列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant-package:create")),
+    _: User = Depends(check_permission("system:tenant-package:create")),
 ):
     """创建租户套餐"""
     package_id = await TenantPackageService.create(db, name, status, remark, menu_ids)
@@ -120,7 +122,7 @@ async def update_tenant_package(
     remark: str = Query(None, description="备注"),
     menu_ids: str = Query(None, description="关联的菜单编号列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant-package:update")),
+    _: User = Depends(check_permission("system:tenant-package:update")),
 ):
     """更新租户套餐"""
     result = await TenantPackageService.update(db, id, name, status, remark, menu_ids)
@@ -131,7 +133,7 @@ async def update_tenant_package(
 async def delete_tenant_package(
     id: int = Query(..., description="套餐编号"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant-package:delete")),
+    _: User = Depends(check_permission("system:tenant-package:delete")),
 ):
     """删除租户套餐"""
     result = await TenantPackageService.delete(db, id)
@@ -142,7 +144,7 @@ async def delete_tenant_package(
 async def delete_tenant_package_list(
     ids: List[int] = Query(..., description="套餐编号列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant-package:delete")),
+    _: User = Depends(check_permission("system:tenant-package:delete")),
 ):
     """批量删除租户套餐"""
     count = await TenantPackageService.delete_list(db, ids)

@@ -21,7 +21,7 @@ async def create_notice(
     type: int = Query(..., description="公告类型: 1-通知, 2-公告"),
     status: int = Query(0, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:notice:create")),
+    _: User = Depends(check_permission("system:notice:create")),
 ):
     """创建通知公告"""
     notice_id = await NoticeService.create(db, title, content, type, status)
@@ -36,7 +36,7 @@ async def update_notice(
     type: int = Query(None, description="公告类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:notice:update")),
+    _: User = Depends(check_permission("system:notice:update")),
 ):
     """更新通知公告"""
     await NoticeService.update(db, id, title, content, type, status)
@@ -47,7 +47,7 @@ async def update_notice(
 async def delete_notice(
     id: int = Query(..., description="公告ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:notice:delete")),
+    _: User = Depends(check_permission("system:notice:delete")),
 ):
     """删除通知公告"""
     await NoticeService.delete(db, id)
@@ -58,7 +58,7 @@ async def delete_notice(
 async def get_notice(
     id: int = Query(..., description="公告ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:notice:query")),
+    _: User = Depends(check_permission("system:notice:query")),
 ):
     """获取通知公告详情"""
     notice = await NoticeService.get_by_id(db, id)
@@ -82,7 +82,7 @@ async def get_notice_page(
     type: int = Query(None, description="公告类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:notice:query")),
+    _: User = Depends(check_permission("system:notice:query")),
 ):
     """分页查询通知公告"""
     notices, total = await NoticeService.get_page(db, page_no, page_size, title, type, status)

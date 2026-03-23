@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.dependencies import check_permission
+from app.module.system.model.user import User
 from app.module.system.service.sms_log import SmsLogService
 from app.common.response import success, page_success
 
@@ -25,6 +27,7 @@ async def get_sms_log_page(
     send_time: List[datetime] = Query(None, alias="sendTime", description="发送时间"),
     receive_time: List[datetime] = Query(None, alias="receiveTime", description="接收时间"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-log:query")),
 ):
     """分页查询短信日志"""
     logs, total = await SmsLogService.get_page(
@@ -78,6 +81,7 @@ async def get_sms_log_page(
 async def get_sms_log(
     id: int = Query(..., description="日志编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-log:query")),
 ):
     """根据ID获取短信日志详情"""
     log = await SmsLogService.get_by_id(db, id)

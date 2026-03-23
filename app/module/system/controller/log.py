@@ -37,7 +37,7 @@ async def get_operate_log_page(
     sub_type: str = Query(None, description="操作名"),
     create_time: List[str] = Query(None, description="创建时间范围"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:operate-log:query")),
+    _: User = Depends(check_permission("system:operate-log:query")),
 ):
     """分页查询操作日志"""
     query = OperateLogPageQuery(
@@ -61,7 +61,7 @@ async def get_operate_log_page(
 async def get_operate_log(
     id: int = Query(..., description="日志编号"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:operate-log:query")),
+    _: User = Depends(check_permission("system:operate-log:query")),
 ):
     """根据ID获取操作日志详情"""
     from app.module.system.model.operate_log import OperateLog
@@ -87,7 +87,7 @@ async def get_login_log_page(
     user_ip: str = Query(None, description="用户IP"),
     create_time: List[str] = Query(None, description="登录时间范围"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:login-log:query")),
+    _: User = Depends(check_permission("system:login-log:query")),
 ):
     """分页查询登录日志"""
     query = LoginLogPageQuery(
@@ -113,7 +113,7 @@ async def get_login_log_page(
 async def get_login_log(
     id: int = Query(..., description="日志编号"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:login-log:query")),
+    _: User = Depends(check_permission("system:login-log:query")),
 ):
     """根据ID获取登录日志详情"""
     from app.module.system.model.login_log import LoginLog

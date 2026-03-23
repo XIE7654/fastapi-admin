@@ -21,7 +21,7 @@ async def create_post(
     sort: int = Query(0, description="显示顺序"),
     remark: str = Query("", description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:post:create")),
+    _: User = Depends(check_permission("system:post:create")),
 ):
     """创建岗位"""
     post_id = await PostService.create(db, name, code, sort, remark)
@@ -36,7 +36,7 @@ async def update_post(
     sort: int = Query(None, description="显示顺序"),
     remark: str = Query(None, description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:post:update")),
+    _: User = Depends(check_permission("system:post:update")),
 ):
     """更新岗位"""
     await PostService.update(db, id, name, code, sort, remark)
@@ -47,7 +47,7 @@ async def update_post(
 async def delete_post(
     id: int = Query(..., description="岗位ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:post:delete")),
+    _: User = Depends(check_permission("system:post:delete")),
 ):
     """删除岗位"""
     await PostService.delete(db, id)
@@ -58,7 +58,7 @@ async def delete_post(
 async def get_post(
     id: int = Query(..., description="岗位ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:post:query")),
+    _: User = Depends(check_permission("system:post:query")),
 ):
     """根据ID获取岗位详情"""
     post = await PostService.get_by_id(db, id)
@@ -83,7 +83,7 @@ async def get_post_page(
     code: str = Query(None, description="岗位编码"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:post:query")),
+    _: User = Depends(check_permission("system:post:query")),
 ):
     """分页查询岗位列表"""
     posts, total = await PostService.get_page(db, page_no, page_size, name, code, status)
@@ -109,6 +109,7 @@ async def get_post_page(
 @router.get("/simple-list", summary="获取岗位精简信息列表")
 async def get_simple_post_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取岗位精简信息列表（只包含被开启的岗位，主要用于前端的下拉选项）"""
     posts = await PostService.get_all(db)

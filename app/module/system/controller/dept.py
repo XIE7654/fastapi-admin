@@ -24,7 +24,7 @@ async def create_dept(
     email: str = Query(None, description="邮箱"),
     status: int = Query(0, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dept:create")),
+    _: User = Depends(check_permission("system:dept:create")),
 ):
     """创建部门"""
     dept_id = await DeptService.create(db, name, parent_id, sort, leader_user_id, phone, email, status)
@@ -42,7 +42,7 @@ async def update_dept(
     email: str = Query(None, description="邮箱"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dept:update")),
+    _: User = Depends(check_permission("system:dept:update")),
 ):
     """更新部门"""
     await DeptService.update(db, id, name, parent_id, sort, leader_user_id, phone, email, status)
@@ -53,7 +53,7 @@ async def update_dept(
 async def delete_dept(
     id: int = Query(..., description="部门ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dept:delete")),
+    _: User = Depends(check_permission("system:dept:delete")),
 ):
     """删除部门"""
     await DeptService.delete(db, id)
@@ -65,7 +65,7 @@ async def get_dept_list(
     name: str = Query(None, description="部门名称"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dept:list")),
+    _: User = Depends(check_permission("system:dept:query")),
 ):
     """获取部门列表"""
     depts = await DeptService.get_all(db, name, status)
@@ -88,12 +88,13 @@ async def get_dept_list(
 @router.get("/simple-list", summary="获取部门精简信息列表")
 async def get_simple_dept_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     获取部门精简信息列表
 
     只包含被开启的部门，主要用于前端的下拉选项
-    无需权限认证
+    需要登录认证
     """
     depts = await DeptService.get_all(db, status=0)
     return success(data=[
@@ -109,6 +110,7 @@ async def get_simple_dept_list(
 @router.get("/list-all-simple", summary="获取部门精简信息列表")
 async def get_list_all_simple(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取部门精简信息列表（兼容路径）"""
     depts = await DeptService.get_all(db, status=0)
@@ -127,6 +129,7 @@ async def get_dept_tree(
     name: str = Query(None, description="部门名称"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取部门树结构"""
     tree = await DeptService.get_dept_tree(db, name, status)
@@ -137,7 +140,7 @@ async def get_dept_tree(
 async def get_dept(
     id: int = Query(..., description="部门ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dept:query")),
+    _: User = Depends(check_permission("system:dept:query")),
 ):
     """根据ID获取部门详情"""
     dept = await DeptService.get_by_id(db, id)

@@ -30,7 +30,7 @@ async def create_menu(
     keep_alive: int = Query(0, description="是否缓存"),
     always_show: int = Query(0, description="是否总是显示"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:menu:create")),
+    _: User = Depends(check_permission("system:menu:create")),
 ):
     """创建菜单"""
     menu_id = await MenuService.create(
@@ -57,7 +57,7 @@ async def update_menu(
     keep_alive: int = Query(None, description="是否缓存"),
     always_show: int = Query(None, description="是否总是显示"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:menu:update")),
+    _: User = Depends(check_permission("system:menu:update")),
 ):
     """更新菜单"""
     await MenuService.update(
@@ -71,7 +71,7 @@ async def update_menu(
 async def delete_menu(
     id: int = Query(..., description="菜单ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:menu:delete")),
+    _: User = Depends(check_permission("system:menu:delete")),
 ):
     """删除菜单"""
     await MenuService.delete(db, id)
@@ -83,7 +83,7 @@ async def get_menu_list(
     name: str = Query(None, description="菜单名称"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:menu:list")),
+    _: User = Depends(check_permission("system:menu:query")),
 ):
     """获取菜单列表"""
     menus = await MenuService.get_all(db, name, status)
@@ -110,11 +110,31 @@ async def get_menu_list(
     return success(data=menu_list)
 
 
+@router.get("/simple-list", summary="获取菜单精简信息列表")
+async def get_simple_menu_list(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """获取菜单精简信息列表（只包含被开启的菜单，用于角色分配菜单功能的选项）"""
+    menus = await MenuService.get_all(db, status=0)
+    # 序列化菜单列表
+    menu_list = []
+    for menu in menus:
+        menu_list.append({
+            "id": menu.id,
+            "name": menu.name,
+            "permission": menu.permission,
+            "parentId": menu.parent_id,
+            "type": menu.type,
+        })
+    return success(data=menu_list)
+
+
 @router.get("/get", summary="获得菜单信息")
 async def get_menu(
     id: int = Query(..., description="菜单ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:menu:query")),
+    _: User = Depends(check_permission("system:menu:query")),
 ):
     """根据ID获取菜单详情"""
     menu = await MenuService.get_by_id(db, id)

@@ -68,7 +68,7 @@ async def get_tenant_page(
     package_id: int = Query(None, description="租户套餐编号"),
     create_time: List[datetime] = Query(None, description="创建时间"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant:query")),
+    _: User = Depends(check_permission("system:tenant:query")),
 ):
     """分页查询租户列表"""
     tenants, total = await TenantService.get_page(
@@ -99,7 +99,7 @@ async def get_tenant_page(
 @router.get("/list", summary="获取租户列表")
 async def get_tenant_list(
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:tenant:list")),
+    _: User = Depends(check_permission("system:tenant:query")),
 ):
     """获取所有租户列表"""
     tenants = await TenantService.get_all(db)
@@ -121,6 +121,7 @@ async def get_tenant_list(
 async def get_tenant(
     id: int = Query(..., description="租户ID"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:tenant:query")),
 ):
     """获取租户详情"""
     tenant = await TenantService.get_by_id(db, id)

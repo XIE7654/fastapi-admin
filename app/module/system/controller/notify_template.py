@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.dependencies import check_permission
+from app.module.system.model.user import User
 from app.module.system.service.notify_template import NotifyTemplateService, NotifyMessageServiceExt
 from app.common.response import success, page_success
 
@@ -25,6 +27,7 @@ async def get_notify_template_page(
     status: int = Query(None, description="状态"),
     type: int = Query(None, description="类型"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:notify-template:query")),
 ):
     """分页查询站内信模板"""
     templates, total = await NotifyTemplateService.get_page(
@@ -56,6 +59,7 @@ async def get_notify_template_page(
 async def get_notify_template(
     id: int = Query(..., description="模板编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:notify-template:query")),
 ):
     """根据ID获取站内信模板详情"""
     template = await NotifyTemplateService.get_by_id(db, id)
@@ -85,6 +89,7 @@ async def get_notify_message_page(
     template_code: str = Query(None, description="模板编码"),
     template_type: int = Query(None, description="模板类型"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:notify-message:query")),
 ):
     """分页查询站内信消息"""
     messages, total = await NotifyMessageServiceExt.get_page(

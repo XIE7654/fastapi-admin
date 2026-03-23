@@ -24,7 +24,7 @@ router = APIRouter()
 async def get_config_page(
     query: ConfigPageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:config:list")),
+    _: User = Depends(check_permission("system:config:query")),
 ):
     """分页查询参数配置"""
     configs, total = await ConfigService.get_list(db, query)
@@ -41,6 +41,7 @@ async def get_config(
     id: int = Query(None, description="配置ID"),
     key: str = Query(None, description="配置键名"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:config:query")),
 ):
     """根据ID或键名获取配置详情"""
     if id:
@@ -59,6 +60,7 @@ async def get_config(
 async def get_config_value(
     key: str = Query(..., description="配置键名"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """根据键名获取配置值"""
     value = await ConfigService.get_value(db, key)
@@ -69,7 +71,7 @@ async def get_config_value(
 async def create_config(
     config_create: ConfigCreate,
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:config:create")),
+    _: User = Depends(check_permission("system:config:create")),
 ):
     """创建参数配置"""
     config = await ConfigService.create(db, config_create)
@@ -81,7 +83,7 @@ async def update_config(
     config_update: ConfigUpdate,
     id: int = Query(..., description="配置ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:config:update")),
+    _: User = Depends(check_permission("system:config:update")),
 ):
     """更新参数配置"""
     config = await ConfigService.update(db, id, config_update)
@@ -92,7 +94,7 @@ async def update_config(
 async def delete_config(
     id: int = Query(..., description="配置ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:config:delete")),
+    _: User = Depends(check_permission("system:config:delete")),
 ):
     """删除参数配置"""
     await ConfigService.delete(db, id)

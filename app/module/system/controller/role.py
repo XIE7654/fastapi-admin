@@ -23,7 +23,7 @@ async def create_role(
     data_scope_dept_ids: str = Query("", description="数据范围部门ID列表"),
     remark: str = Query("", description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:role:create")),
+    _: User = Depends(check_permission("system:role:create")),
 ):
     """创建角色"""
     role_id = await RoleService.create(db, name, code, sort, data_scope, data_scope_dept_ids, remark)
@@ -40,7 +40,7 @@ async def update_role(
     data_scope_dept_ids: str = Query(None, description="数据范围部门ID列表"),
     remark: str = Query(None, description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:role:update")),
+    _: User = Depends(check_permission("system:role:update")),
 ):
     """更新角色"""
     await RoleService.update(db, id, name, code, sort, data_scope, data_scope_dept_ids, remark)
@@ -51,7 +51,7 @@ async def update_role(
 async def delete_role(
     id: int = Query(..., description="角色ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:role:delete")),
+    _: User = Depends(check_permission("system:role:delete")),
 ):
     """删除角色"""
     await RoleService.delete(db, id)
@@ -62,7 +62,7 @@ async def delete_role(
 async def delete_role_list(
     ids: List[int] = Query(..., description="角色ID列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:role:delete")),
+    _: User = Depends(check_permission("system:role:delete")),
 ):
     """批量删除角色"""
     await RoleService.delete_list(db, ids)
@@ -73,7 +73,7 @@ async def delete_role_list(
 async def get_role(
     id: int = Query(..., description="角色ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:role:query")),
+    _: User = Depends(check_permission("system:role:query")),
 ):
     """根据ID获取角色详情"""
     role = await RoleService.get_by_id(db, id)
@@ -101,7 +101,7 @@ async def get_role_page(
     code: str = Query(None, description="角色编码"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:role:query")),
+    _: User = Depends(check_permission("system:role:query")),
 ):
     """分页查询角色列表"""
     roles, total = await RoleService.get_page(db, page_no, page_size, name, code, status)
@@ -130,6 +130,7 @@ async def get_role_page(
 @router.get("/simple-list", summary="获取角色精简信息列表")
 async def get_simple_role_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取角色精简信息列表（只包含被开启的角色，主要用于前端的下拉选项）"""
     roles = await RoleService.get_all(db)

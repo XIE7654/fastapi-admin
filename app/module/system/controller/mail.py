@@ -30,7 +30,7 @@ async def get_mail_account_page(
     mail: str = Query(None, description="邮箱"),
     username: str = Query(None, description="用户名"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:mail-account:query")),
+    _: User = Depends(check_permission("system:mail-account:query")),
 ):
     """分页查询邮箱账号"""
     accounts, total = await MailAccountService.get_page(
@@ -59,6 +59,7 @@ async def get_mail_account_page(
 @router_account.get("/simple-list", summary="获得邮箱账号精简列表")
 async def get_simple_mail_account_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取邮箱账号精简列表"""
     accounts = await MailAccountService.get_all(db)
@@ -74,6 +75,7 @@ async def get_simple_mail_account_list(
 @router_account.get("/list-all-simple", summary="获得邮箱账号精简列表")
 async def get_list_all_simple(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取邮箱账号精简列表（兼容路径）"""
     accounts = await MailAccountService.get_all(db)
@@ -90,6 +92,7 @@ async def get_list_all_simple(
 async def get_mail_account(
     id: int = Query(..., description="账号编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:mail-account:query")),
 ):
     """根据ID获取邮箱账号详情"""
     account = await MailAccountService.get_by_id(db, id)
@@ -119,7 +122,7 @@ async def get_mail_template_page(
     account_id: int = Query(None, description="邮箱账号编号"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:mail-template:query")),
+    _: User = Depends(check_permission("system:mail-template:query")),
 ):
     """分页查询邮件模板"""
     templates, total = await MailTemplateService.get_page(
@@ -151,6 +154,7 @@ async def get_mail_template_page(
 @router_template.get("/simple-list", summary="获得邮件模板精简列表")
 async def get_simple_mail_template_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取邮件模板精简列表"""
     templates = await MailTemplateService.get_all(db)
@@ -168,6 +172,7 @@ async def get_simple_mail_template_list(
 @router_template.get("/list-all-simple", summary="获得邮件模板精简列表")
 async def get_template_list_all_simple(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取邮件模板精简列表（兼容路径）"""
     templates = await MailTemplateService.get_all(db)
@@ -186,6 +191,7 @@ async def get_template_list_all_simple(
 async def get_mail_template(
     id: int = Query(..., description="模板编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:mail-template:query")),
 ):
     """根据ID获取邮件模板详情"""
     template = await MailTemplateService.get_by_id(db, id)
@@ -219,7 +225,7 @@ async def get_mail_log_page(
     template_id: int = Query(None, description="模板编号"),
     send_status: int = Query(None, description="发送状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:mail-log:query")),
+    _: User = Depends(check_permission("system:mail-log:query")),
 ):
     """分页查询邮件日志"""
     logs, total = await MailLogService.get_page(
@@ -261,6 +267,7 @@ async def get_mail_log_page(
 async def get_mail_log(
     id: int = Query(..., description="日志编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:mail-log:query")),
 ):
     """根据ID获取邮件日志详情"""
     log = await MailLogService.get_by_id(db, id)

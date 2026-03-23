@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.dependencies import check_permission
+from app.module.system.model.user import User
 from app.module.system.service.social import SocialClientService, SocialUserService
 from app.common.response import success, page_success
 
@@ -25,6 +27,7 @@ async def get_social_client_page(
     user_type: int = Query(None, alias="userType", description="用户类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:social-client:query")),
 ):
     """分页查询社交客户端"""
     clients, total = await SocialClientService.get_page(
@@ -55,6 +58,7 @@ async def get_social_client_page(
 async def get_social_client(
     id: int = Query(..., description="客户端编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:social-client:query")),
 ):
     """根据ID获取社交客户端详情"""
     client = await SocialClientService.get_by_id(db, id)
@@ -81,6 +85,7 @@ async def get_social_user_page(
     openid: str = Query(None, description="社交openid"),
     nickname: str = Query(None, description="用户昵称"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:social-user:query")),
 ):
     """分页查询社交用户"""
     users, total = await SocialUserService.get_page(
@@ -111,6 +116,7 @@ async def get_social_user_page(
 async def get_social_user(
     id: int = Query(..., description="用户编号"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:social-user:query")),
 ):
     """根据ID获取社交用户详情"""
     user = await SocialUserService.get_by_id(db, id)

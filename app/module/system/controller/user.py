@@ -27,7 +27,7 @@ router = APIRouter()
 async def create_user(
     user_create: UserCreate,
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:create")),
+    _: User = Depends(check_permission("system:user:create")),
 ):
     """创建新用户"""
     user_id = await UserService.create(db, user_create)
@@ -38,7 +38,7 @@ async def create_user(
 async def update_user(
     user_update: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:update")),
+    _: User = Depends(check_permission("system:user:update")),
 ):
     """更新用户信息"""
     await UserService.update(db, user_update.id, user_update)
@@ -49,7 +49,7 @@ async def update_user(
 async def delete_user(
     id: int = Query(..., description="用户ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:delete")),
+    _: User = Depends(check_permission("system:user:delete")),
 ):
     """删除用户"""
     await UserService.delete(db, id)
@@ -60,7 +60,7 @@ async def delete_user(
 async def delete_user_list(
     ids: List[int] = Query(..., description="用户ID列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:delete")),
+    _: User = Depends(check_permission("system:user:delete")),
 ):
     """批量删除用户"""
     await UserService.delete_list(db, ids)
@@ -71,7 +71,7 @@ async def delete_user_list(
 async def update_user_password(
     req: UserResetPassword,
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:update-password")),
+    _: User = Depends(check_permission("system:user:update-password")),
 ):
     """重置用户密码（管理员操作）"""
     await UserService.reset_password(db, req.id, req.password)
@@ -82,7 +82,7 @@ async def update_user_password(
 async def update_user_status(
     req: UserUpdateStatus,
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:update")),
+    _: User = Depends(check_permission("system:user:update")),
 ):
     """更新用户状态（启用/禁用）"""
     await UserService.update_status(db, req.id, req.status)
@@ -93,7 +93,7 @@ async def update_user_status(
 async def get_user_page(
     query: UserPageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:user:query")),
+    _: User = Depends(check_permission("system:user:query")),
 ):
     """分页查询用户列表"""
     users, total = await UserService.get_list(db, query)
@@ -108,6 +108,7 @@ async def get_user_page(
 @router.get("/simple-list", summary="获取用户精简信息列表")
 async def get_simple_user_list(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取用户精简信息列表（只包含被开启的用户，主要用于前端的下拉选项）"""
     users = await UserService.get_enabled_users(db)
@@ -126,6 +127,7 @@ async def get_simple_user_list(
 async def get_user(
     id: int = Query(..., description="用户ID"),
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:user:query")),
 ):
     """根据ID获取用户详情"""
     user = await UserService.get_by_id(db, id)

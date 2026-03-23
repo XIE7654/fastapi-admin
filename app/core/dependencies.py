@@ -1,7 +1,7 @@
 """
 FastAPI 公共依赖
 """
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List, Set, TYPE_CHECKING
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -84,6 +84,21 @@ async def get_current_user_optional(
         return None
 
 
+async def _get_user_permissions(db: AsyncSession, user_id: int) -> Set[str]:
+    """
+    获取用户权限列表
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+
+    Returns:
+        权限标识集合
+    """
+    from app.module.system.service.menu import MenuService
+    return await MenuService.get_user_permissions(db, user_id)
+
+
 def check_permission(permission: str):
     """
     权限检查依赖
@@ -95,13 +110,23 @@ def check_permission(permission: str):
         依赖函数
 
     Usage:
-        @router.get("/users", dependencies=[Depends(check_permission("system:user:list"))])
+        @router.get("/users")
+        async def list_users(user: User = Depends(check_permission("system:user:list"))):
+            ...
     """
-    async def _check_permission(user: "User" = Depends(get_current_user)) -> "User":
-        # TODO: 实现权限检查逻辑
-        # 从缓存或数据库获取用户权限列表
-        # if permission not in user.permissions:
-        #     raise ForbiddenException(f"无权限: {permission}")
+    async def _check_permission(
+        user: "User" = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+    ) -> "User":
+        # 超级管理员拥有所有权限
+        if user.id == 1:
+            return user
+
+        # 获取用户权限列表
+        permissions = await _get_user_permissions(db, user.id)
+        if permission not in permissions:
+            raise ForbiddenException(f"无权限: {permission}")
+
         return user
 
     return _check_permission
@@ -116,12 +141,25 @@ def check_permissions(permissions: List[str]):
 
     Returns:
         依赖函数
+
+    Usage:
+        @router.get("/users")
+        async def list_users(user: User = Depends(check_permissions(["system:user:list", "system:user:query"]))):
+            ...
     """
-    async def _check_permissions(user: "User" = Depends(get_current_user)) -> "User":
-        # TODO: 实现权限检查逻辑
-        # user_permissions = await get_user_permissions(user.id)
-        # if not any(p in user_permissions for p in permissions):
-        #     raise ForbiddenException("无权限")
+    async def _check_permissions(
+        user: "User" = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+    ) -> "User":
+        # 超级管理员拥有所有权限
+        if user.id == 1:
+            return user
+
+        # 获取用户权限列表
+        user_permissions = await _get_user_permissions(db, user.id)
+        if not any(p in user_permissions for p in permissions):
+            raise ForbiddenException("无权限")
+
         return user
 
     return _check_permissions
@@ -137,8 +175,21 @@ def check_role(role_code: str):
     Returns:
         依赖函数
     """
-    async def _check_role(user: "User" = Depends(get_current_user)) -> "User":
-        # TODO: 实现角色检查逻辑
+    async def _check_role(
+        user: "User" = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+    ) -> "User":
+        from app.module.system.service.role import RoleService
+
+        # 超级管理员拥有所有角色
+        if user.id == 1:
+            return user
+
+        # 获取用户角色列表
+        roles = await RoleService.get_user_roles(db, user.id)
+        if not any(r.code == role_code for r in roles):
+            raise ForbiddenException(f"无角色权限: {role_code}")
+
         return user
 
     return _check_role
