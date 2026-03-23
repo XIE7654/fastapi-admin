@@ -1,6 +1,8 @@
 """
 统一响应格式
 """
+import json
+from datetime import datetime, date
 from typing import Any, Optional, Generic, TypeVar, List
 from dataclasses import dataclass, field
 from fastapi.responses import JSONResponse
@@ -9,6 +11,43 @@ from pydantic import BaseModel
 from app.core.exceptions import BusinessException
 
 T = TypeVar("T")
+
+
+class TimestampEncoder(json.JSONEncoder):
+    """自定义 JSON 编码器，将 datetime 序列化为时间戳（毫秒）"""
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            # 返回毫秒级时间戳
+            return int(obj.timestamp() * 1000)
+        elif isinstance(obj, date):
+            # 日期也转为时间戳
+            return int(datetime.combine(obj, datetime.min.time()).timestamp() * 1000)
+        return super().default(obj)
+
+
+def serialize_data(data: Any) -> Any:
+    """
+    序列化数据，处理 Pydantic 模型和 datetime 类型
+
+    Args:
+        data: 原始数据
+
+    Returns:
+        序列化后的数据（datetime 转为时间戳）
+    """
+    if isinstance(data, BaseModel):
+        # Pydantic 模型：使用自定义编码器序列化
+        return json.loads(json.dumps(data.model_dump(by_alias=True), cls=TimestampEncoder))
+    elif isinstance(data, list):
+        return [serialize_data(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: serialize_data(v) for k, v in data.items()}
+    elif isinstance(data, datetime):
+        return int(data.timestamp() * 1000)
+    elif isinstance(data, date):
+        return int(datetime.combine(data, datetime.min.time()).timestamp() * 1000)
+    return data
 
 
 @dataclass
@@ -44,10 +83,9 @@ def success(data: Any = None, msg: str = "success") -> dict:
     Returns:
         响应字典
     """
-    # 处理 Pydantic 模型，使用别名序列化
-    if isinstance(data, BaseModel):
-        data = data.model_dump(by_alias=True)
-    return Response(code=0, msg=msg, data=data).to_dict()
+    # 序列化数据，将 datetime 转为时间戳
+    serialized_data = serialize_data(data)
+    return Response(code=0, msg=msg, data=serialized_data).to_dict()
 
 
 def error(
@@ -66,7 +104,9 @@ def error(
     Returns:
         响应字典
     """
-    return Response(code=code, msg=msg, data=data).to_dict()
+    # 序列化数据，将 datetime 转为时间戳
+    serialized_data = serialize_data(data)
+    return Response(code=code, msg=msg, data=serialized_data).to_dict()
 
 
 def page_success(
@@ -87,8 +127,10 @@ def page_success(
     Returns:
         响应字典
     """
+    # 序列化列表数据，将 datetime 转为时间戳
+    serialized_list = serialize_data(list_data)
     return success(data={
-        "list": list_data,
+        "list": serialized_list,
         "total": total,
         "pageNo": page_no,
         "pageSize": page_size,

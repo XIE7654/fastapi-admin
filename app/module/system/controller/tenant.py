@@ -2,6 +2,7 @@
 租户控制器
 """
 from typing import List
+from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,12 +66,13 @@ async def get_tenant_page(
     contact_mobile: str = Query(None, description="联系手机"),
     status: int = Query(None, description="状态"),
     package_id: int = Query(None, description="租户套餐编号"),
+    create_time: List[datetime] = Query(None, description="创建时间"),
     db: AsyncSession = Depends(get_db),
     # _: User = Depends(check_permission("system:tenant:query")),
 ):
     """分页查询租户列表"""
     tenants, total = await TenantService.get_page(
-        db, page_no, page_size, name, contact_name, contact_mobile, status, package_id
+        db, page_no, page_size, name, contact_name, contact_mobile, status, package_id, create_time
     )
     return page_success(
         list_data=[

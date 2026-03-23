@@ -106,6 +106,7 @@ class TenantService:
         contact_mobile: str = None,
         status: int = None,
         package_id: int = None,
+        create_time: List[datetime] = None,
     ) -> tuple[List[Tenant], int]:
         """分页获取租户列表"""
         # 构建查询条件
@@ -120,6 +121,8 @@ class TenantService:
             conditions.append(Tenant.status == status)
         if package_id is not None:
             conditions.append(Tenant.package_id == package_id)
+        if create_time and len(create_time) == 2:
+            conditions.append(Tenant.create_time.between(create_time[0], create_time[1]))
 
         # 查询总数
         count_query = select(func.count(Tenant.id))
