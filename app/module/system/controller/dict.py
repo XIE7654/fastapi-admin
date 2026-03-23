@@ -11,26 +11,29 @@ from app.module.system.model.user import User
 from app.module.system.service.dict import DictService
 from app.common.response import success, page_success
 
-router = APIRouter()
+# 字典类型路由
+router_type = APIRouter()
+
+# 字典数据路由
+router_data = APIRouter()
 
 
 # ==================== 字典类型接口 ====================
 
-@router.post("/type/create", summary="创建字典类型")
+@router_type.post("/create", summary="创建字典类型")
 async def create_dict_type(
     name: str = Query(..., description="字典名称"),
     type: str = Query(..., description="字典类型"),
     status: int = Query(0, description="状态"),
     remark: str = Query("", description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:create")),
 ):
     """创建字典类型"""
     dict_type_id = await DictService.create_dict_type(db, name, type, status, remark)
     return success(data=dict_type_id)
 
 
-@router.put("/type/update", summary="修改字典类型")
+@router_type.put("/update", summary="修改字典类型")
 async def update_dict_type(
     id: int = Query(..., description="字典类型ID"),
     name: str = Query(None, description="字典名称"),
@@ -38,36 +41,33 @@ async def update_dict_type(
     status: int = Query(None, description="状态"),
     remark: str = Query(None, description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:update")),
 ):
     """更新字典类型"""
     await DictService.update_dict_type(db, id, name, type, status, remark)
     return success(data=True)
 
 
-@router.delete("/type/delete", summary="删除字典类型")
+@router_type.delete("/delete", summary="删除字典类型")
 async def delete_dict_type(
     id: int = Query(..., description="字典类型ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:delete")),
 ):
     """删除字典类型"""
     await DictService.delete_dict_type(db, id)
     return success(data=True)
 
 
-@router.delete("/type/delete-list", summary="批量删除字典类型")
+@router_type.delete("/delete-list", summary="批量删除字典类型")
 async def delete_dict_type_list(
     ids: List[int] = Query(..., description="字典类型ID列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:delete")),
 ):
     """批量删除字典类型"""
     await DictService.delete_dict_type_list(db, ids)
     return success(data=True)
 
 
-@router.get("/type/page", summary="获得字典类型的分页列表")
+@router_type.get("/page", summary="获得字典类型的分页列表")
 async def get_dict_type_page(
     page_no: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=100, description="每页数量"),
@@ -75,7 +75,6 @@ async def get_dict_type_page(
     type: str = Query(None, description="字典类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典类型列表"""
     types, total = await DictService.get_dict_type_page(db, page_no, page_size, name, type, status)
@@ -97,11 +96,10 @@ async def get_dict_type_page(
     )
 
 
-@router.get("/type/get", summary="查询字典类型详细")
+@router_type.get("/get", summary="查询字典类型详细")
 async def get_dict_type(
     id: int = Query(..., description="字典类型ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:query")),
 ):
     """根据ID获取字典类型详情"""
     dict_type = await DictService.get_dict_type_by_id(db, id)
@@ -117,7 +115,7 @@ async def get_dict_type(
     })
 
 
-@router.get("/type/simple-list", summary="获得全部字典类型列表")
+@router_type.get("/simple-list", summary="获得全部字典类型列表")
 async def get_simple_dict_type_list(
     db: AsyncSession = Depends(get_db),
 ):
@@ -131,7 +129,7 @@ async def get_simple_dict_type_list(
 
 # ==================== 字典数据接口 ====================
 
-@router.post("/data/create", summary="新增字典数据")
+@router_data.post("/create", summary="新增字典数据")
 async def create_dict_data(
     sort: int = Query(0, description="显示顺序"),
     label: str = Query(..., description="字典标签"),
@@ -142,7 +140,6 @@ async def create_dict_data(
     css_class: str = Query(None, description="CSS类名"),
     remark: str = Query("", description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:create")),
 ):
     """创建字典数据"""
     dict_data_id = await DictService.create_dict_data(
@@ -151,7 +148,7 @@ async def create_dict_data(
     return success(data=dict_data_id)
 
 
-@router.put("/data/update", summary="修改字典数据")
+@router_data.put("/update", summary="修改字典数据")
 async def update_dict_data(
     id: int = Query(..., description="字典数据ID"),
     sort: int = Query(None, description="显示顺序"),
@@ -163,7 +160,6 @@ async def update_dict_data(
     css_class: str = Query(None, description="CSS类名"),
     remark: str = Query(None, description="备注"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:update")),
 ):
     """更新字典数据"""
     await DictService.update_dict_data(
@@ -172,29 +168,27 @@ async def update_dict_data(
     return success(data=True)
 
 
-@router.delete("/data/delete", summary="删除字典数据")
+@router_data.delete("/delete", summary="删除字典数据")
 async def delete_dict_data(
     id: int = Query(..., description="字典数据ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:delete")),
 ):
     """删除字典数据"""
     await DictService.delete_dict_data(db, id)
     return success(data=True)
 
 
-@router.delete("/data/delete-list", summary="批量删除字典数据")
+@router_data.delete("/delete-list", summary="批量删除字典数据")
 async def delete_dict_data_list(
     ids: List[int] = Query(..., description="字典数据ID列表"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:delete")),
 ):
     """批量删除字典数据"""
     await DictService.delete_dict_data_list(db, ids)
     return success(data=True)
 
 
-@router.get("/data/simple-list", summary="获得全部字典数据列表")
+@router_data.get("/simple-list", summary="获得全部字典数据列表")
 async def get_simple_dict_data_list(
     db: AsyncSession = Depends(get_db),
 ):
@@ -212,14 +206,13 @@ async def get_simple_dict_data_list(
     ])
 
 
-@router.get("/data/page", summary="获得字典数据的分页")
+@router_data.get("/page", summary="获得字典数据的分页")
 async def get_dict_data_page(
     page_no: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=100, description="每页数量"),
     dict_type: str = Query(None, description="字典类型"),
     status: int = Query(None, description="状态"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典数据列表"""
     data_list, total = await DictService.get_dict_data_page(db, page_no, page_size, dict_type, status)
@@ -245,11 +238,10 @@ async def get_dict_data_page(
     )
 
 
-@router.get("/data/get", summary="查询字典数据详细")
+@router_data.get("/get", summary="查询字典数据详细")
 async def get_dict_data(
     id: int = Query(..., description="字典数据ID"),
     db: AsyncSession = Depends(get_db),
-    # _: User = Depends(check_permission("system:dict:query")),
 ):
     """根据ID获取字典数据详情"""
     dict_data = await DictService.get_dict_data_by_id(db, id)

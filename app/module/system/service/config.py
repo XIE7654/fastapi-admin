@@ -1,8 +1,8 @@
 """
 参数配置服务
 """
-from typing import Optional, List
-from sqlalchemy import select, and_
+from typing import Optional, List, Tuple
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.system.model.config import Config
@@ -59,7 +59,7 @@ class ConfigService:
         return default
 
     @staticmethod
-    async def get_list(db: AsyncSession, query: ConfigPageQuery) -> tuple[List[Config], int]:
+    async def get_list(db: AsyncSession, query: ConfigPageQuery) -> Tuple[List[Config], int]:
         """分页查询配置列表"""
         conditions = [Config.deleted == 0]
 
@@ -75,10 +75,9 @@ class ConfigService:
             conditions.append(Config.visible == query.visible)
 
         # 查询总数
-        count_result = await db.execute(
-            select(Config).where(and_(*conditions))
-        )
-        total = len(count_result.all())
+        count_query = select(func.count()).select_from(Config).where(and_(*conditions))
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
 
         # 分页查询
         result = await db.execute(

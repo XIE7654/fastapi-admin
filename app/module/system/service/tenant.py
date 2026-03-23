@@ -3,7 +3,7 @@
 """
 from typing import Optional, List
 from datetime import datetime
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.system.model.tenant import Tenant
@@ -87,3 +87,55 @@ class TenantService:
             ).params(website=website)
         )
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_tenant_by_name(db: AsyncSession, name: str) -> Optional[Tenant]:
+        """根据租户名获取租户"""
+        result = await db.execute(
+            select(Tenant).where(Tenant.name == name)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_page(
+        db: AsyncSession,
+        page_no: int = 1,
+        page_size: int = 10,
+        name: str = None,
+        contact_name: str = None,
+        contact_mobile: str = None,
+        status: int = None,
+        package_id: int = None,
+    ) -> tuple[List[Tenant], int]:
+        """分页获取租户列表"""
+        # 构建查询条件
+        conditions = []
+        if name:
+            conditions.append(Tenant.name.like(f"%{name}%"))
+        if contact_name:
+            conditions.append(Tenant.contact_name.like(f"%{contact_name}%"))
+        if contact_mobile:
+            conditions.append(Tenant.contact_mobile.like(f"%{contact_mobile}%"))
+        if status is not None:
+            conditions.append(Tenant.status == status)
+        if package_id is not None:
+            conditions.append(Tenant.package_id == package_id)
+
+        # 查询总数
+        count_query = select(func.count(Tenant.id))
+        if conditions:
+            count_query = count_query.where(*conditions)
+        total_result = await db.execute(count_query)
+        total = total_result.scalar() or 0
+
+        # 查询列表
+        query = select(Tenant)
+        if conditions:
+            query = query.where(*conditions)
+        query = query.order_by(Tenant.id.desc())
+        query = query.offset((page_no - 1) * page_size).limit(page_size)
+
+        result = await db.execute(query)
+        items = list(result.scalars().all())
+
+        return items, total

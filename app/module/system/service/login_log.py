@@ -1,9 +1,9 @@
 """
 登录日志服务
 """
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from datetime import datetime
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.system.model.login_log import LoginLog
@@ -96,7 +96,7 @@ class LoginLogService:
         return log
 
     @staticmethod
-    async def get_list(db: AsyncSession, query: LoginLogPageQuery) -> tuple[List[LoginLog], int]:
+    async def get_list(db: AsyncSession, query: LoginLogPageQuery) -> Tuple[List[LoginLog], int]:
         """分页查询登录日志"""
         conditions = [LoginLog.deleted == 0]
 
@@ -114,10 +114,9 @@ class LoginLogService:
             conditions.append(LoginLog.login_time.between(query.login_time[0], query.login_time[1]))
 
         # 查询总数
-        count_result = await db.execute(
-            select(LoginLog).where(and_(*conditions))
-        )
-        total = len(count_result.all())
+        count_query = select(func.count()).select_from(LoginLog).where(and_(*conditions))
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
 
         # 分页查询
         result = await db.execute(

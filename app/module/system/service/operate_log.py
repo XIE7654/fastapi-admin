@@ -3,10 +3,10 @@
 """
 import json
 import time
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from datetime import datetime
 from functools import wraps
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.system.model.operate_log import OperateLog
@@ -58,7 +58,7 @@ class OperateLogService:
         return log
 
     @staticmethod
-    async def get_list(db: AsyncSession, query: OperateLogPageQuery) -> tuple[List[OperateLog], int]:
+    async def get_list(db: AsyncSession, query: OperateLogPageQuery) -> Tuple[List[OperateLog], int]:
         """分页查询操作日志"""
         conditions = [OperateLog.deleted == 0]
 
@@ -76,10 +76,9 @@ class OperateLogService:
             conditions.append(OperateLog.start_time.between(query.start_time[0], query.start_time[1]))
 
         # 查询总数
-        count_result = await db.execute(
-            select(OperateLog).where(and_(*conditions))
-        )
-        total = len(count_result.all())
+        count_query = select(func.count()).select_from(OperateLog).where(and_(*conditions))
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
 
         # 分页查询
         result = await db.execute(

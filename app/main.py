@@ -82,7 +82,7 @@ def register_routers(app: FastAPI):
     """注册所有路由"""
     from app.module.system.controller import (
         auth, user, role, menu, dept, dict, post,
-        log, config, online_user, tenant, notify_message
+        log, config, online_user, tenant, notify_message, tenant_package
     )
 
     # 认证管理
@@ -103,8 +103,11 @@ def register_routers(app: FastAPI):
     # 岗位管理
     app.include_router(post.router, prefix=f"{settings.API_PREFIX}/system/post", tags=["岗位管理"])
 
-    # 字典管理
-    app.include_router(dict.router, prefix=f"{settings.API_PREFIX}/system/dict", tags=["字典管理"])
+    # 字典类型管理
+    app.include_router(dict.router_type, prefix=f"{settings.API_PREFIX}/system/dict-type", tags=["字典类型管理"])
+
+    # 字典数据管理
+    app.include_router(dict.router_data, prefix=f"{settings.API_PREFIX}/system/dict-data", tags=["字典数据管理"])
 
     # 日志管理
     app.include_router(log.router, prefix=f"{settings.API_PREFIX}/system/log", tags=["日志管理"])
@@ -117,6 +120,9 @@ def register_routers(app: FastAPI):
 
     # 租户管理
     app.include_router(tenant.router, prefix=f"{settings.API_PREFIX}/system/tenant", tags=["租户管理"])
+
+    # 租户套餐管理
+    app.include_router(tenant_package.router, prefix=f"{settings.API_PREFIX}/system/tenant-package", tags=["租户套餐管理"])
 
     # 站内信管理
     app.include_router(notify_message.router, prefix=f"{settings.API_PREFIX}/system/notify-message", tags=["站内信管理"])

@@ -1,8 +1,8 @@
 """
 用户服务
 """
-from typing import Optional, List
-from sqlalchemy import select, or_, and_
+from typing import Optional, List, Tuple
+from sqlalchemy import select, or_, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -41,7 +41,7 @@ class UserService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_list(db: AsyncSession, query: UserPageQuery) -> tuple[List[User], int]:
+    async def get_list(db: AsyncSession, query: UserPageQuery) -> Tuple[List[User], int]:
         """分页查询用户列表"""
         # 构建查询条件
         conditions = [User.deleted == 0]
@@ -58,10 +58,9 @@ class UserService:
             conditions.append(User.dept_id == query.dept_id)
 
         # 查询总数
-        count_result = await db.execute(
-            select(User).where(and_(*conditions))
-        )
-        total = len(count_result.all())
+        count_query = select(func.count()).select_from(User).where(and_(*conditions))
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
 
         # 分页查询
         result = await db.execute(
@@ -146,6 +145,28 @@ class UserService:
         await db.flush()
 
         return True
+
+    @staticmethod
+    async def delete_list(db: AsyncSession, user_ids: List[int]) -> int:
+        """批量删除用户（软删除）"""
+        count = 0
+        for user_id in user_ids:
+            try:
+                await UserService.delete(db, user_id)
+                count += 1
+            except BusinessException:
+                pass
+        return count
+
+    @staticmethod
+    async def get_enabled_users(db: AsyncSession) -> List[User]:
+        """获取所有启用的用户"""
+        result = await db.execute(
+            select(User)
+            .where(User.deleted == 0, User.status == 0)
+            .order_by(User.id.asc())
+        )
+        return list(result.scalars().all())
 
     @staticmethod
     async def update_password(
