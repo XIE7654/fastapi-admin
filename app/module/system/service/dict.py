@@ -69,20 +69,26 @@ class DictService:
         return list(result.scalars().all())
 
     @staticmethod
-    async def get_all_dict_data(db: AsyncSession, status: int = None) -> List[DictData]:
+    async def get_all_dict_data(db: AsyncSession, status: int = None, dict_type: str = None) -> List[DictData]:
         """
         获取全部字典数据列表
+
+        参考 Java DictDataService.getDictDataList 实现
 
         Args:
             db: 数据库会话
             status: 状态过滤，None 表示不过滤
+            dict_type: 字典类型过滤，None 表示不过滤
 
         Returns:
-            字典数据列表
+            字典数据列表，按 dictType > sort 排序
         """
         query = select(DictData).where(DictData.deleted == 0)
         if status is not None:
             query = query.where(DictData.status == status)
-        query = query.order_by(DictData.sort.asc())
+        if dict_type is not None:
+            query = query.where(DictData.dict_type == dict_type)
+        # 排序：先按 dictType 排序，再按 sort 排序（与 Java 一致）
+        query = query.order_by(DictData.dict_type.asc(), DictData.sort.asc())
         result = await db.execute(query)
         return list(result.scalars().all())

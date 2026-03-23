@@ -49,15 +49,15 @@ class MenuService:
 
     @staticmethod
     async def get_user_menus(db: AsyncSession, user_id: int) -> List[dict]:
-        """获取用户的菜单树"""
+        """获取用户的菜单树（只包含目录和菜单，不包含按钮）"""
         menu_ids = await MenuService.get_user_menu_ids(db, user_id)
         if not menu_ids:
             return []
 
-        # 查询菜单
+        # 查询菜单，过滤掉按钮类型(type=3)，只保留目录(type=1)和菜单(type=2)
         result = await db.execute(
             select(Menu)
-            .where(Menu.id.in_(menu_ids), Menu.status == 0)
+            .where(Menu.id.in_(menu_ids), Menu.status == 0, Menu.type != 3)
             .order_by(Menu.sort.asc())
         )
         menus = list(result.scalars().all())

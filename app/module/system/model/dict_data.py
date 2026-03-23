@@ -5,10 +5,10 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, BigInteger, SmallInteger, ForeignKey
 
-from app.module.system.model.base import Base, TimestampMixin, TenantMixin
+from app.module.system.model.base import Base, TimestampMixin, SoftDeleteMixin
 
 
-class DictData(Base, TimestampMixin):
+class DictData(Base, TimestampMixin, SoftDeleteMixin):
     """字典数据表"""
 
     __tablename__ = "system_dict_data"
