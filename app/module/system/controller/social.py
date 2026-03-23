@@ -41,7 +41,6 @@ async def get_social_client_page(
                 "clientId": c.client_id,
                 "clientSecret": c.client_secret,
                 "agentId": c.agent_id,
-                "publicKey": c.public_key,
                 "createTime": c.create_time,
             }
             for c in clients
@@ -70,7 +69,6 @@ async def get_social_client(
         "clientId": client.client_id,
         "clientSecret": client.client_secret,
         "agentId": client.agent_id,
-        "publicKey": client.public_key,
         "createTime": client.create_time,
     })
 

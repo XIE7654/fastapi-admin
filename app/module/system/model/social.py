@@ -19,7 +19,6 @@ class SocialClient(Base, TimestampMixin):
     client_id = Column(String(255), nullable=False, comment="客户端ID")
     client_secret = Column(String(255), nullable=False, comment="客户端密钥")
     agent_id = Column(String(64), nullable=True, comment="代理编号")
-    public_key = Column(String(256), nullable=True, comment="公钥")
 
 
 class SocialUser(Base, TimestampMixin):
