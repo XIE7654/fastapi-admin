@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.system.model.login_log import LoginLog
 from app.module.system.schema.log import LoginLogPageQuery
+from app.common.utils import generate_snowflake_id
 
 
 class LoginLogService:
@@ -31,6 +32,7 @@ class LoginLogService:
         """创建登录日志"""
         log = LoginLog(
             log_type=log_type,
+            trace_id=str(generate_snowflake_id()),
             user_id=user_id,
             username=username,
             user_ip=user_ip,

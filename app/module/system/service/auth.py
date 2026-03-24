@@ -16,6 +16,7 @@ from app.module.system.schema.auth import (
     LoginRequest,
     LoginResponse,
     TokenResponse,
+    RefreshTokenResponse,
     PermissionInfoResponse,
 )
 
@@ -108,7 +109,7 @@ class AuthService:
         return result
 
     @staticmethod
-    async def refresh_token(db: AsyncSession, refresh_token: str) -> TokenResponse:
+    async def refresh_token(db: AsyncSession, refresh_token: str) -> RefreshTokenResponse:
         """
         刷新Token
 
@@ -125,11 +126,11 @@ class AuthService:
             client_id="default",
         )
 
-        return TokenResponse(
+        return RefreshTokenResponse(
+            user_id=access_token_do.user_id,
             access_token=access_token_do.access_token,
             refresh_token=access_token_do.refresh_token,
-            token_type="Bearer",
-            expires_in=int((access_token_do.expires_time - datetime.now()).total_seconds()),
+            expires_time=int(access_token_do.expires_time.timestamp() * 1000),
         )
 
     @staticmethod

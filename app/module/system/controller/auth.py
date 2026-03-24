@@ -14,6 +14,7 @@ from app.module.system.schema.auth import (
     LoginResponse,
     TokenResponse,
     RefreshTokenRequest,
+    RefreshTokenResponse,
     PermissionInfoResponse,
 )
 from app.common.response import success, error
@@ -91,7 +92,7 @@ async def refresh_token(
         "userId": access_token_do.user_id,
         "accessToken": access_token_do.access_token,
         "refreshToken": access_token_do.refresh_token,
-        "expiresTime": int(access_token_do.expires_time.timestamp() * 1000),
+        "expiresTime": access_token_do.expires_time,
     })
 
 
