@@ -236,15 +236,18 @@ class OAuth2TokenService:
         """
         检查访问令牌有效性
 
+        与 Java OAuth2TokenServiceImpl.checkAccessToken 保持一致
+        使用 401 错误码，前端根据此错误码重定向到登录页
+
         :raises BusinessException: 令牌无效或已过期
         """
         token_data = await OAuth2TokenService.get_access_token(db, access_token)
         if not token_data:
-            raise BusinessException(code=ErrorCode.TOKEN_INVALID, message="访问令牌不存在")
+            raise BusinessException(code=ErrorCode.UNAUTHORIZED, message="访问令牌不存在")
 
         expires_time = datetime.fromisoformat(token_data["expiresTime"]) if token_data.get("expiresTime") else None
         if expires_time and datetime.now() > expires_time:
-            raise BusinessException(code=ErrorCode.TOKEN_EXPIRED, message="访问令牌已过期")
+            raise BusinessException(code=ErrorCode.UNAUTHORIZED, message="访问令牌已过期")
 
         return token_data
 
@@ -303,14 +306,14 @@ class OAuth2TokenService:
         refresh_token_do = result.scalar_one_or_none()
 
         if not refresh_token_do:
-            raise BusinessException(code=ErrorCode.TOKEN_INVALID, message="无效的刷新令牌")
+            raise BusinessException(code=ErrorCode.BAD_REQUEST, message="无效的刷新令牌")
 
         if refresh_token_do.client_id != client_id:
-            raise BusinessException(code=ErrorCode.TOKEN_INVALID, message="刷新令牌的客户端编号不正确")
+            raise BusinessException(code=ErrorCode.BAD_REQUEST, message="刷新令牌的客户端编号不正确")
 
         # 检查是否过期
         if refresh_token_do.expires_time and datetime.now() > refresh_token_do.expires_time:
-            raise BusinessException(code=ErrorCode.TOKEN_EXPIRED, message="刷新令牌已过期")
+            raise BusinessException(code=ErrorCode.UNAUTHORIZED, message="刷新令牌已过期")
 
         # 删除旧的访问令牌
         await db.execute(

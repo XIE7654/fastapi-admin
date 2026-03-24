@@ -37,13 +37,16 @@ async def login(
     """
     # 获取客户端IP
     ip = request.client.host if request.client else "unknown"
+    # 获取 User-Agent
+    user_agent = request.headers.get("user-agent", "")
 
-    result = await AuthService.login(db, login_req, ip)
+    result = await AuthService.login(db, login_req, ip, user_agent)
     return success(data=result)
 
 
 @router.post("/logout", summary="登出系统")
 async def logout(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     authorization: Optional[str] = Header(None),
     current_user: User = Depends(get_current_user),
@@ -55,7 +58,19 @@ async def logout(
         token = authorization[7:]
 
     if token:
-        await AuthService.logout(db, token)
+        # 获取客户端信息
+        ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "")
+
+        await AuthService.logout(
+            db=db,
+            access_token=token,
+            user_id=current_user.id,
+            username=current_user.username,
+            user_ip=ip,
+            user_agent=user_agent,
+            tenant_id=current_user.tenant_id,
+        )
     return success(data=True)
 
 

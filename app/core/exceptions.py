@@ -63,23 +63,35 @@ class AuthenticationException(BusinessException):
 
 # 错误码常量
 class ErrorCode:
-    """错误码定义"""
+    """错误码定义 - 与 Java GlobalErrorCodeConstants 保持一致"""
 
-    # 系统级错误 1000-1999
+    # 系统级错误 0-999
     SUCCESS = 0
-    SYSTEM_ERROR = 500
-    PARAM_ERROR = 400
-    UNAUTHORIZED = 401
-    FORBIDDEN = 403
+    BAD_REQUEST = 400
+    UNAUTHORIZED = 401  # 账号未登录
+    FORBIDDEN = 403     # 没有该操作权限
     NOT_FOUND = 404
+    METHOD_NOT_ALLOWED = 405
+    LOCKED = 423
+    TOO_MANY_REQUESTS = 429
+    INTERNAL_SERVER_ERROR = 500
+    NOT_IMPLEMENTED = 501
+    ERROR_CONFIGURATION = 502
 
+    # 自定义错误段 900+
+    REPEATED_REQUESTS = 900
+    DEMO_DENY = 901
+    UNKNOWN = 999
+
+    # 业务错误 1000+ (与 Java 业务错误码保持一致)
     # 认证错误 2000-2999
     USER_NOT_EXISTS = 2001
     USER_PASSWORD_INCORRECT = 2002
     USER_DISABLED = 2003
     USER_EXPIRED = 2004
-    TOKEN_EXPIRED = 2005
-    TOKEN_INVALID = 2006
+    # 注意：TOKEN 相关错误使用 401，不使用以下自定义码
+    # TOKEN_EXPIRED = 2005
+    # TOKEN_INVALID = 2006
     CAPTCHA_ERROR = 2007
     CAPTCHA_EXPIRED = 2008
 

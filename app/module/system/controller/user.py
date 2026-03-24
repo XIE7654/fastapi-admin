@@ -2,7 +2,7 @@
 用户控制器
 """
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -21,15 +21,18 @@ from app.module.system.schema.user import (
     UserUpdateStatus,
 )
 from app.common.response import success, error, page_success
+from app.common.decorators import operate_log
 
 router = APIRouter()
 
 
 @router.post("/create", summary="新增用户")
+@operate_log(type="用户管理", sub_type="创建用户")
 async def create_user(
+    request: Request,
     user_create: UserCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(check_permission("system:user:create")),
+    current_user: User = Depends(check_permission("system:user:create")),
 ):
     """创建新用户"""
     user_id = await UserService.create(db, user_create)
@@ -37,10 +40,12 @@ async def create_user(
 
 
 @router.put("/update", summary="修改用户")
+@operate_log(type="用户管理", sub_type="修改用户")
 async def update_user(
+    request: Request,
     user_update: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(check_permission("system:user:update")),
+    current_user: User = Depends(check_permission("system:user:update")),
 ):
     """更新用户信息"""
     await UserService.update(db, user_update.id, user_update)
@@ -48,10 +53,12 @@ async def update_user(
 
 
 @router.delete("/delete", summary="删除用户")
+@operate_log(type="用户管理", sub_type="删除用户")
 async def delete_user(
+    request: Request,
     id: int = Query(..., description="用户ID"),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(check_permission("system:user:delete")),
+    current_user: User = Depends(check_permission("system:user:delete")),
 ):
     """删除用户"""
     await UserService.delete(db, id)
@@ -70,10 +77,12 @@ async def delete_user_list(
 
 
 @router.put("/update-password", summary="重置用户密码")
+@operate_log(type="用户管理", sub_type="重置密码")
 async def update_user_password(
+    request: Request,
     req: UserResetPassword,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(check_permission("system:user:update-password")),
+    current_user: User = Depends(check_permission("system:user:update-password")),
 ):
     """重置用户密码（管理员操作）"""
     await UserService.reset_password(db, req.id, req.password)
@@ -81,10 +90,12 @@ async def update_user_password(
 
 
 @router.put("/update-status", summary="修改用户状态")
+@operate_log(type="用户管理", sub_type="修改状态")
 async def update_user_status(
+    request: Request,
     req: UserUpdateStatus,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(check_permission("system:user:update")),
+    current_user: User = Depends(check_permission("system:user:update")),
 ):
     """更新用户状态（启用/禁用）"""
     await UserService.update_status(db, req.id, req.status)

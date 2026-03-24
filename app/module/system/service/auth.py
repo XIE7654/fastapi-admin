@@ -9,6 +9,7 @@ from app.module.system.service.user import UserService
 from app.module.system.service.menu import MenuService
 from app.module.system.service.role import RoleService
 from app.module.system.service.oauth2_token import OAuth2TokenService, UserTypeEnum
+from app.module.system.service.login_log import LoginLogService
 from app.core.redis import get_redis, RedisKeyPrefix, set_cache, get_cache, delete_cache
 from app.core.exceptions import BusinessException, ErrorCode
 from app.module.system.schema.auth import (
@@ -23,7 +24,7 @@ class AuthService:
     """认证服务"""
 
     @staticmethod
-    async def login(db: AsyncSession, login_req: LoginRequest, ip: str) -> LoginResponse:
+    async def login(db: AsyncSession, login_req: LoginRequest, ip: str, user_agent: str = None) -> LoginResponse:
         """
         用户登录
 
@@ -31,6 +32,7 @@ class AuthService:
             db: 数据库会话
             login_req: 登录请求
             ip: 客户端IP
+            user_agent: 用户代理
 
         Returns:
             登录响应
@@ -54,6 +56,17 @@ class AuthService:
         user.login_ip = ip
         user.login_date = datetime.now()
 
+        # 记录登录日志
+        await LoginLogService.create_login_log(
+            db=db,
+            user_id=user.id,
+            username=user.username,
+            user_ip=ip,
+            user_agent=user_agent,
+            result=0,  # 成功
+            tenant_id=login_req.tenant_id or 1,
+        )
+
         return LoginResponse(
             user_id=user.id,
             access_token=access_token_do.access_token,
@@ -62,18 +75,37 @@ class AuthService:
         )
 
     @staticmethod
-    async def logout(db: AsyncSession, access_token: str) -> bool:
+    async def logout(db: AsyncSession, access_token: str, user_id: int = None, username: str = None,
+                     user_ip: str = None, user_agent: str = None, tenant_id: int = None) -> bool:
         """
         用户登出
 
         Args:
             db: 数据库会话
             access_token: 访问令牌
+            user_id: 用户ID
+            username: 用户名
+            user_ip: 用户IP
+            user_agent: 用户代理
+            tenant_id: 租户ID
 
         Returns:
             是否成功
         """
-        return await OAuth2TokenService.remove_access_token(db, access_token)
+        result = await OAuth2TokenService.remove_access_token(db, access_token)
+
+        # 记录登出日志
+        if user_id and username:
+            await LoginLogService.create_logout_log(
+                db=db,
+                user_id=user_id,
+                username=username,
+                user_ip=user_ip,
+                user_agent=user_agent,
+                tenant_id=tenant_id,
+            )
+
+        return result
 
     @staticmethod
     async def refresh_token(db: AsyncSession, refresh_token: str) -> TokenResponse:

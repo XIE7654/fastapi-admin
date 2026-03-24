@@ -62,8 +62,8 @@ class PostService:
         total_result = await db.execute(count_query)
         total = total_result.scalar()
 
-        # 分页查询
-        query = query.order_by(Post.sort.asc())
+        # 分页查询（与 Java PostMapper.selectPage 一致：按 id 降序）
+        query = query.order_by(Post.id.desc())
         query = query.offset((page_no - 1) * page_size).limit(page_size)
         result = await db.execute(query)
         posts = result.scalars().all()

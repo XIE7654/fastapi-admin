@@ -91,8 +91,8 @@ class DictService:
         total_result = await db.execute(count_query)
         total = total_result.scalar()
 
-        # 分页查询
-        query = query.order_by(DictData.dict_type.asc(), DictData.sort.asc())
+        # 分页查询（与 Java DictDataMapper.selectPage 一致：按 dictType 降序、sort 降序）
+        query = query.order_by(DictData.dict_type.desc(), DictData.sort.desc())
         query = query.offset((page_no - 1) * page_size).limit(page_size)
         result = await db.execute(query)
         data_list = result.scalars().all()

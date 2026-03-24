@@ -28,6 +28,7 @@ class OperateLogService:
         user_ip: str = None,
         user_agent: str = None,
         tenant_id: int = None,
+        success: bool = True,
     ) -> OperateLog:
         """创建操作日志"""
         log = OperateLog(
@@ -44,6 +45,7 @@ class OperateLogService:
             user_ip=user_ip,
             user_agent=user_agent,
             tenant_id=tenant_id or 1,
+            success=success,
         )
         db.add(log)
         await db.flush()
