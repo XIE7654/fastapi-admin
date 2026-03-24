@@ -1,6 +1,6 @@
-# Yudao FastAPI
+# FastAPI admin
 
-基于 FastAPI 的企业级后台管理系统，迁移自 ruoyi-vue-pro (Java)。
+基于 FastAPI 的企业级后台管理系统
 
 ## 技术栈
 
@@ -19,7 +19,7 @@
 ## 项目结构
 
 ```
-yudao-fastapi/
+fastapi-admin/
 ├── app/
 │   ├── core/                    # 核心组件
 │   │   ├── database.py          # 数据库连接
@@ -102,7 +102,7 @@ yudao-fastapi/
 
 ```bash
 # 克隆项目
-cd yudao-fastapi
+cd fastapi-admin
 
 # 创建虚拟环境
 python -m venv venv
