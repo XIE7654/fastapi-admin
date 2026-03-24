@@ -2,6 +2,7 @@
 用户模型
 """
 from typing import Optional, List
+import json
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, BigInteger, SmallInteger, Text
 from sqlalchemy.orm import relationship
@@ -64,7 +65,15 @@ class User(Base, TimestampMixin, TenantMixin):
         """获取岗位ID列表"""
         if not self.post_ids:
             return []
-        return [int(pid) for pid in self.post_ids.split(",") if pid]
+        # 处理 JSON 数组格式 (如 '[]' 或 '[1,2,3]')
+        if self.post_ids.startswith("["):
+            try:
+                ids = json.loads(self.post_ids)
+                return [int(pid) for pid in ids if pid]
+            except (json.JSONDecodeError, ValueError):
+                return []
+        # 处理逗号分隔格式 (如 '1,2,3')
+        return [int(pid) for pid in self.post_ids.split(",") if pid.strip()]
 
 
 class UserRole(Base):

@@ -76,6 +76,7 @@ class DictService:
         page_no: int,
         page_size: int,
         dict_type: Optional[str] = None,
+        label: Optional[str] = None,
         status: Optional[int] = None,
     ) -> Tuple[List[DictData], int]:
         """分页查询字典数据"""
@@ -83,6 +84,8 @@ class DictService:
 
         if dict_type:
             query = query.where(DictData.dict_type == dict_type)
+        if label:
+            query = query.where(DictData.label.like(f"%{label}%"))
         if status is not None:
             query = query.where(DictData.status == status)
 

@@ -1,8 +1,9 @@
 """
 短信控制器
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
+from pydantic import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -10,6 +11,46 @@ from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.sms import SmsChannelService, SmsTemplateService
 from app.common.response import success, page_success
+from app.common.schema import CamelModel
+
+
+# ==================== 请求 Schema ====================
+
+class SmsChannelCreateReq(CamelModel):
+    """短信渠道创建请求"""
+
+    signature: str = Field(..., description="短信签名")
+    code: str = Field(..., description="渠道编码")
+    status: int = Field(..., description="启用状态")
+    api_key: str = Field(..., description="短信API的账号")
+    remark: Optional[str] = Field(None, description="备注")
+    api_secret: Optional[str] = Field(None, description="短信API的密钥")
+    callback_url: Optional[str] = Field(None, description="短信发送回调URL")
+
+
+class SmsChannelUpdateReq(CamelModel):
+    """短信渠道更新请求"""
+
+    id: int = Field(..., description="编号")
+    signature: Optional[str] = Field(None, description="短信签名")
+    code: Optional[str] = Field(None, description="渠道编码")
+    status: Optional[int] = Field(None, description="启用状态")
+    api_key: Optional[str] = Field(None, description="短信API的账号")
+    remark: Optional[str] = Field(None, description="备注")
+    api_secret: Optional[str] = Field(None, description="短信API的密钥")
+    callback_url: Optional[str] = Field(None, description="短信发送回调URL")
+
+
+class SmsTemplateCreateReq(CamelModel):
+    """短信模板创建请求"""
+
+    name: str = Field(..., description="模板名称")
+    code: str = Field(..., description="模板编码")
+    channel_id: int = Field(..., description="短信渠道编号")
+    content: str = Field(..., description="模板内容")
+    status: int = Field(..., description="启用状态")
+    remark: Optional[str] = Field(None, description="备注")
+
 
 # 短信渠道路由
 router_channel = APIRouter()
@@ -19,6 +60,69 @@ router_template = APIRouter()
 
 
 # ==================== 短信渠道接口 ====================
+
+@router_channel.post("/create", summary="创建短信渠道")
+async def create_sms_channel(
+    req: SmsChannelCreateReq,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-channel:create")),
+):
+    """创建短信渠道"""
+    channel = await SmsChannelService.create(
+        db=db,
+        signature=req.signature,
+        code=req.code,
+        status=req.status,
+        api_key=req.api_key,
+        remark=req.remark,
+        api_secret=req.api_secret,
+        callback_url=req.callback_url,
+    )
+    return success(data=channel.id)
+
+
+@router_channel.put("/update", summary="更新短信渠道")
+async def update_sms_channel(
+    req: SmsChannelUpdateReq,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-channel:update")),
+):
+    """更新短信渠道"""
+    await SmsChannelService.update(
+        db=db,
+        channel_id=req.id,
+        signature=req.signature,
+        code=req.code,
+        status=req.status,
+        api_key=req.api_key,
+        remark=req.remark,
+        api_secret=req.api_secret,
+        callback_url=req.callback_url,
+    )
+    return success(data=True)
+
+
+@router_channel.delete("/delete", summary="删除短信渠道")
+async def delete_sms_channel(
+    id: int = Query(..., description="渠道编号"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-channel:delete")),
+):
+    """删除短信渠道"""
+    await SmsChannelService.delete(db, id)
+    return success(data=True)
+
+
+@router_channel.delete("/delete-list", summary="批量删除短信渠道")
+async def delete_sms_channel_list(
+    ids: List[int] = Query(..., description="渠道编号列表"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-channel:delete")),
+):
+    """批量删除短信渠道"""
+    count = await SmsChannelService.delete_by_ids(db, ids)
+    return success(data=True)
+
 
 @router_channel.get("/page", summary="获得短信渠道分页")
 async def get_sms_channel_page(
@@ -113,6 +217,25 @@ async def get_sms_channel(
 
 
 # ==================== 短信模板接口 ====================
+
+@router_template.post("/create", summary="创建短信模板")
+async def create_sms_template(
+    req: SmsTemplateCreateReq,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-template:create")),
+):
+    """创建短信模板"""
+    template = await SmsTemplateService.create(
+        db=db,
+        name=req.name,
+        code=req.code,
+        channel_id=req.channel_id,
+        content=req.content,
+        status=req.status,
+        remark=req.remark,
+    )
+    return success(data=template.id)
+
 
 @router_template.get("/page", summary="获得短信模板分页")
 async def get_sms_template_page(

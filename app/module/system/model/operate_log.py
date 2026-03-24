@@ -5,10 +5,10 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, BigInteger, SmallInteger, Text, Boolean
 
-from app.module.system.model.base import Base, TenantMixin
+from app.module.system.model.base import Base, TenantMixin, TimestampMixin
 
 
-class OperateLog(Base, TenantMixin):
+class OperateLog(Base, TimestampMixin, TenantMixin):
     """操作日志表 V2版本"""
 
     __tablename__ = "system_operate_log"

@@ -17,6 +17,7 @@ class OperateLogResponse(CamelORMModel):
     id: int = Field(..., description="日志ID")
     trace_id: Optional[str] = Field(None, description="链路追踪编号")
     user_id: Optional[int] = Field(None, description="用户ID")
+    user_name: Optional[str] = Field(None, description="用户昵称")
     user_type: Optional[int] = Field(None, description="用户类型")
     type: Optional[str] = Field(None, description="操作模块类型")
     sub_type: Optional[str] = Field(None, description="操作名")
@@ -65,3 +66,15 @@ class LoginLogPageQuery(PageQuery):
     result: Optional[int] = Field(None, description="结果码")
     user_ip: Optional[str] = Field(None, description="用户IP")
     create_time: Optional[List[datetime]] = Field(None, description="登录时间范围")
+
+
+# ==================== 站内信消息 ====================
+
+class NotifyMessagePageQuery(PageQuery):
+    """站内信消息分页查询"""
+
+    user_id: Optional[int] = Field(None, description="用户ID")
+    user_type: Optional[int] = Field(None, description="用户类型")
+    template_code: Optional[str] = Field(None, description="模板编码")
+    template_type: Optional[int] = Field(None, description="模板类型")
+    create_time: Optional[List[datetime]] = Field(None, description="创建时间范围")

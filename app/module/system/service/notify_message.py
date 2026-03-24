@@ -1,11 +1,12 @@
 """
 站内信消息服务
 """
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.system.model.notify import NotifyMessage
+from app.module.system.schema.log import NotifyMessagePageQuery
 
 
 class NotifyMessageService:
@@ -168,3 +169,56 @@ class NotifyMessageService:
 
         await db.commit()
         return count
+
+    @staticmethod
+    async def get_page(db: AsyncSession, query: NotifyMessagePageQuery) -> Tuple[List[NotifyMessage], int]:
+        """
+        分页查询站内信消息
+
+        Args:
+            db: 数据库会话
+            query: 分页查询参数
+
+        Returns:
+            站内信消息列表和总数
+        """
+        conditions = []
+
+        if query.user_id:
+            conditions.append(NotifyMessage.user_id == query.user_id)
+        if query.user_type:
+            conditions.append(NotifyMessage.user_type == query.user_type)
+        if query.template_code:
+            conditions.append(NotifyMessage.template_code == query.template_code)
+        if query.template_type:
+            conditions.append(NotifyMessage.template_type == query.template_type)
+        if query.create_time and len(query.create_time) == 2:
+            conditions.append(NotifyMessage.create_time.between(query.create_time[0], query.create_time[1]))
+
+        # 查询总数
+        if conditions:
+            count_query = select(func.count()).select_from(NotifyMessage).where(and_(*conditions))
+        else:
+            count_query = select(func.count()).select_from(NotifyMessage)
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
+
+        # 分页查询
+        if conditions:
+            result = await db.execute(
+                select(NotifyMessage)
+                .where(and_(*conditions))
+                .order_by(NotifyMessage.id.desc())
+                .offset(query.offset)
+                .limit(query.limit)
+            )
+        else:
+            result = await db.execute(
+                select(NotifyMessage)
+                .order_by(NotifyMessage.id.desc())
+                .offset(query.offset)
+                .limit(query.limit)
+            )
+        messages = result.scalars().all()
+
+        return list(messages), total

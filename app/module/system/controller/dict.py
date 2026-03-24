@@ -113,16 +113,29 @@ async def get_dict_type(
     })
 
 
-@router_type.get("/simple-list", summary="获得全部字典类型列表")
-async def get_simple_dict_type_list(
-    db: AsyncSession = Depends(get_db),
-):
+async def _get_simple_dict_type_list(db: AsyncSession):
     """获取全部字典类型列表（包括开启 + 禁用的字典类型，主要用于前端的下拉选项）无需登录认证"""
     types = await DictService.get_all_dict_types(db)
     return success(data=[
         {"id": t.id, "name": t.name, "type": t.type}
         for t in types
     ])
+
+
+@router_type.get("/simple-list", summary="获得全部字典类型列表")
+async def get_simple_dict_type_list(
+    db: AsyncSession = Depends(get_db),
+):
+    """获取全部字典类型列表"""
+    return await _get_simple_dict_type_list(db)
+
+
+@router_type.get("/list-all-simple", summary="获得全部字典类型列表")
+async def get_list_all_simple(
+    db: AsyncSession = Depends(get_db),
+):
+    """获取全部字典类型列表（包括开启 + 禁用的字典类型，主要用于前端的下拉选项）无需登录认证"""
+    return await _get_simple_dict_type_list(db)
 
 
 # ==================== 字典数据接口 ====================
@@ -202,7 +215,7 @@ async def get_dict_data_page(
     _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典数据列表"""
-    data_list, total = await DictService.get_dict_data_page(db, query.page_no, query.page_size, query.dict_type, query.status)
+    data_list, total = await DictService.get_dict_data_page(db, query.page_no, query.page_size, query.dict_type, query.label, query.status)
     return page_success(
         list_data=[
             {

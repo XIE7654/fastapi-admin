@@ -52,12 +52,32 @@ async def get_operate_log(
     """根据ID获取操作日志详情"""
     from app.module.system.model.operate_log import OperateLog
     result = await db.execute(
-        select(OperateLog).where(OperateLog.id == id, OperateLog.deleted == 0)
+        select(OperateLog, User.nickname)
+        .outerjoin(User, OperateLog.user_id == User.id)
+        .where(OperateLog.id == id, OperateLog.deleted == 0)
     )
-    log = result.scalar_one_or_none()
-    if not log:
+    row = result.first()
+    if not row:
         return success(data=None)
-    return success(data=OperateLogResponse.model_validate(log))
+    log, user_name = row
+    log_dict = {
+        "id": log.id,
+        "trace_id": log.trace_id,
+        "user_id": log.user_id,
+        "user_name": user_name,
+        "user_type": log.user_type,
+        "type": log.type,
+        "sub_type": log.sub_type,
+        "biz_id": log.biz_id,
+        "action": log.action,
+        "extra": log.extra,
+        "request_method": log.request_method,
+        "request_url": log.request_url,
+        "user_ip": log.user_ip,
+        "user_agent": log.user_agent,
+        "create_time": log.create_time,
+    }
+    return success(data=OperateLogResponse.model_validate(log_dict))
 
 
 # ==================== 登录日志 ====================

@@ -4,8 +4,10 @@
 from typing import Optional, List, Tuple
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.module.system.model.operate_log import OperateLog
+from app.module.system.model.user import User
 from app.module.system.schema.log import OperateLogPageQuery
 from app.common.utils import generate_snowflake_id
 
@@ -52,7 +54,7 @@ class OperateLogService:
         return log
 
     @staticmethod
-    async def get_list(db: AsyncSession, query: OperateLogPageQuery) -> Tuple[List[OperateLog], int]:
+    async def get_list(db: AsyncSession, query: OperateLogPageQuery) -> Tuple[List[dict], int]:
         """分页查询操作日志"""
         conditions = [OperateLog.deleted == 0]
 
@@ -70,17 +72,42 @@ class OperateLogService:
         total_result = await db.execute(count_query)
         total = total_result.scalar()
 
-        # 分页查询
+        # 分页查询，关联 User 表获取用户昵称
         result = await db.execute(
-            select(OperateLog)
+            select(OperateLog, User.nickname)
+            .outerjoin(User, OperateLog.user_id == User.id)
             .where(and_(*conditions))
             .order_by(OperateLog.id.desc())
             .offset(query.offset)
             .limit(query.limit)
         )
-        logs = result.scalars().all()
+        rows = result.all()
 
-        return list(logs), total
+        # 组装结果，添加 user_name 字段
+        logs = []
+        for row in rows:
+            log = row[0]
+            user_name = row[1]
+            log_dict = {
+                "id": log.id,
+                "trace_id": log.trace_id,
+                "user_id": log.user_id,
+                "user_name": user_name,
+                "user_type": log.user_type,
+                "type": log.type,
+                "sub_type": log.sub_type,
+                "biz_id": log.biz_id,
+                "action": log.action,
+                "extra": log.extra,
+                "request_method": log.request_method,
+                "request_url": log.request_url,
+                "user_ip": log.user_ip,
+                "user_agent": log.user_agent,
+                "create_time": log.create_time,
+            }
+            logs.append(log_dict)
+
+        return logs, total
 
     @staticmethod
     async def delete_by_ids(db: AsyncSession, log_ids: List[int]) -> int:
