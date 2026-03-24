@@ -2,13 +2,14 @@
 角色控制器
 """
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.role import RoleService
+from app.module.system.schema.role import RoleSave
 from app.common.response import success, page_success
 
 router = APIRouter()
@@ -16,34 +17,42 @@ router = APIRouter()
 
 @router.post("/create", summary="创建角色")
 async def create_role(
-    name: str = Query(..., description="角色名称"),
-    code: str = Query(..., description="角色编码"),
-    sort: int = Query(0, description="显示顺序"),
-    data_scope: int = Query(1, description="数据范围"),
-    data_scope_dept_ids: str = Query("", description="数据范围部门ID列表"),
-    remark: str = Query("", description="备注"),
+    req: RoleSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:role:create")),
 ):
     """创建角色"""
-    role_id = await RoleService.create(db, name, code, sort, data_scope, data_scope_dept_ids, remark)
+    role_id = await RoleService.create(
+        db,
+        name=req.name,
+        code=req.code,
+        sort=req.sort,
+        data_scope=req.data_scope or 1,
+        data_scope_dept_ids=req.data_scope_dept_ids,
+        remark=req.remark,
+    )
     return success(data=role_id)
 
 
 @router.put("/update", summary="修改角色")
 async def update_role(
-    id: int = Query(..., description="角色ID"),
-    name: str = Query(None, description="角色名称"),
-    code: str = Query(None, description="角色编码"),
-    sort: int = Query(None, description="显示顺序"),
-    data_scope: int = Query(None, description="数据范围"),
-    data_scope_dept_ids: str = Query(None, description="数据范围部门ID列表"),
-    remark: str = Query(None, description="备注"),
+    req: RoleSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:role:update")),
 ):
     """更新角色"""
-    await RoleService.update(db, id, name, code, sort, data_scope, data_scope_dept_ids, remark)
+    if not req.id:
+        return success(data=False, message="角色ID不能为空")
+    await RoleService.update(
+        db,
+        role_id=req.id,
+        name=req.name,
+        code=req.code,
+        sort=req.sort,
+        data_scope=req.data_scope,
+        data_scope_dept_ids=req.data_scope_dept_ids,
+        remark=req.remark,
+    )
     return success(data=True)
 
 

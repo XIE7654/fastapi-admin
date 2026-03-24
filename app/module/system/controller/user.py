@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
+from app.module.system.model.dept import Dept
 from app.module.system.service.user import UserService
+from app.module.system.service.dept import DeptService
 from app.module.system.schema.user import (
     UserCreate,
     UserUpdate,
@@ -97,8 +99,41 @@ async def get_user_page(
 ):
     """分页查询用户列表"""
     users, total = await UserService.get_list(db, query)
+
+    # 批量获取部门名称
+    dept_ids = [u.dept_id for u in users if u.dept_id]
+    dept_map = {}
+    if dept_ids:
+        from sqlalchemy import select
+        result = await db.execute(
+            select(Dept.id, Dept.name).where(Dept.id.in_(dept_ids), Dept.deleted == 0)
+        )
+        dept_map = {row.id: row.name for row in result.all()}
+
+    # 构建响应数据，添加部门名称
+    user_responses = []
+    for u in users:
+        user_dict = {
+            "id": u.id,
+            "username": u.username,
+            "nickname": u.nickname,
+            "email": u.email,
+            "mobile": u.mobile,
+            "gender": u.gender,
+            "dept_id": u.dept_id,
+            "dept_name": dept_map.get(u.dept_id) if u.dept_id else None,
+            "post_ids": u.post_ids,
+            "status": u.status,
+            "remark": u.remark,
+            "avatar": u.avatar,
+            "login_ip": u.login_ip,
+            "login_date": u.login_date,
+            "create_time": u.create_time,
+        }
+        user_responses.append(UserResponse.model_validate(user_dict))
+
     return page_success(
-        list_data=[UserResponse.model_validate(u) for u in users],
+        list_data=user_responses,
         total=total,
         page_no=query.page_no,
         page_size=query.page_size,

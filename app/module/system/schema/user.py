@@ -83,6 +83,7 @@ class UserResponse(UserBase):
     login_ip: Optional[str] = Field(None, description="最后登录IP")
     login_date: Optional[datetime] = Field(None, description="最后登录时间")
     create_time: Optional[datetime] = Field(None, description="创建时间")
+    dept_name: Optional[str] = Field(None, description="部门名称")
 
     model_config = {
         "from_attributes": True,

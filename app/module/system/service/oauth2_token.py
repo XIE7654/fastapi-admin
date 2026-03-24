@@ -110,12 +110,23 @@ class OAuth2TokenService:
         db.add(access_token_do)
         await db.flush()
 
+        # 解析 user_info 为字典（存储时是JSON字符串）
+        user_info_dict = {}
+        if access_token_do.user_info:
+            if isinstance(access_token_do.user_info, str):
+                try:
+                    user_info_dict = json.loads(access_token_do.user_info)
+                except (json.JSONDecodeError, TypeError):
+                    user_info_dict = {}
+            elif isinstance(access_token_do.user_info, dict):
+                user_info_dict = access_token_do.user_info
+
         # 缓存到 Redis（失败不影响主流程）
         token_data = {
             "id": access_token_do.id,
             "userId": user_id,
             "userType": user_type,
-            "userInfo": access_token_do.user_info,
+            "userInfo": user_info_dict,
             "accessToken": access_token,
             "refreshToken": refresh_token,
             "clientId": client_id,
@@ -130,6 +141,7 @@ class OAuth2TokenService:
                 json.dumps(token_data, ensure_ascii=False),
                 ex=access_token_validity
             )
+            logger.debug(f"Token已缓存到Redis: {access_token[:8]}..., userId={user_id}, tenantId={tenant_id}")
         except Exception as e:
             logger.warning(f"Redis 缓存 token 失败: {e}")
 
@@ -147,11 +159,15 @@ class OAuth2TokenService:
             redis = await get_redis()
             cached = await redis.get(f"{RedisKeyPrefix.ACCESS_TOKEN}{access_token}")
             if cached:
+                logger.debug(f"从Redis获取token成功: {access_token[:8]}...")
                 return json.loads(cached)
+            else:
+                logger.debug(f"Redis中没有找到token: {access_token[:8]}...")
         except Exception as e:
             logger.warning(f"Redis 获取 token 失败，降级到数据库查询: {e}")
 
         # 从数据库获取
+        logger.debug(f"从数据库查询token: {access_token[:8]}...")
         result = await db.execute(
             select(OAuth2AccessToken).where(
                 OAuth2AccessToken.access_token == access_token,
@@ -160,22 +176,44 @@ class OAuth2TokenService:
         )
         token_do = result.scalar_one_or_none()
         if not token_do:
+            logger.warning(f"数据库中没有找到token: {access_token[:8]}...")
             return None
 
         # 检查是否过期
         if token_do.expires_time and datetime.now() > token_do.expires_time:
+            logger.warning(f"Token已过期: {access_token[:8]}..., 过期时间: {token_do.expires_time}")
             return None
+
+        logger.debug(f"从数据库获取token成功: userId={token_do.user_id}, tenantId={token_do.tenant_id}")
+
+        # 解析 user_info 和 scopes 字段（数据库中存储为JSON字符串）
+        user_info = token_do.user_info
+        if isinstance(user_info, str):
+            try:
+                user_info = json.loads(user_info)
+            except (json.JSONDecodeError, TypeError):
+                user_info = {}
+
+        scopes = None
+        if token_do.scopes:
+            if isinstance(token_do.scopes, str):
+                try:
+                    scopes = json.loads(token_do.scopes)
+                except (json.JSONDecodeError, TypeError):
+                    scopes = None
+            elif isinstance(token_do.scopes, list):
+                scopes = token_do.scopes
 
         # 缓存到 Redis（失败不影响主流程）
         token_data = {
             "id": token_do.id,
             "userId": token_do.user_id,
             "userType": token_do.user_type,
-            "userInfo": token_do.user_info,
+            "userInfo": user_info,
             "accessToken": token_do.access_token,
             "refreshToken": token_do.refresh_token,
             "clientId": token_do.client_id,
-            "scopes": json.loads(token_do.scopes) if token_do.scopes else None,
+            "scopes": scopes,
             "expiresTime": token_do.expires_time.isoformat() if token_do.expires_time else None,
             "tenantId": token_do.tenant_id,
         }
@@ -305,15 +343,34 @@ class OAuth2TokenService:
         await db.flush()
 
         # 缓存到 Redis（失败不影响主流程）
+        # 解析 scopes 字段
+        scopes = None
+        if access_token_do.scopes:
+            if isinstance(access_token_do.scopes, str):
+                try:
+                    scopes = json.loads(access_token_do.scopes)
+                except (json.JSONDecodeError, TypeError):
+                    scopes = None
+            elif isinstance(access_token_do.scopes, list):
+                scopes = access_token_do.scopes
+
+        # 解析 user_info 字段
+        user_info = access_token_do.user_info
+        if isinstance(user_info, str):
+            try:
+                user_info = json.loads(user_info)
+            except (json.JSONDecodeError, TypeError):
+                user_info = {}
+
         token_data = {
             "id": access_token_do.id,
             "userId": access_token_do.user_id,
             "userType": access_token_do.user_type,
-            "userInfo": access_token_do.user_info,
+            "userInfo": user_info,
             "accessToken": new_access_token,
             "refreshToken": refresh_token,
             "clientId": client_id,
-            "scopes": json.loads(access_token_do.scopes) if access_token_do.scopes else None,
+            "scopes": scopes,
             "expiresTime": access_token_do.expires_time.isoformat(),
             "tenantId": access_token_do.tenant_id,
         }
