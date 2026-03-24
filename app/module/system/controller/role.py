@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.role import RoleService
-from app.module.system.schema.role import RoleSave
+from app.module.system.schema.role import RoleSave, RolePageQuery
 from app.common.response import success, page_success
 
 router = APIRouter()
@@ -104,16 +104,12 @@ async def get_role(
 
 @router.get("/page", summary="获得角色分页")
 async def get_role_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    name: str = Query(None, description="角色名称"),
-    code: str = Query(None, description="角色编码"),
-    status: int = Query(None, description="状态"),
+    query: RolePageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:role:query")),
 ):
     """分页查询角色列表"""
-    roles, total = await RoleService.get_page(db, page_no, page_size, name, code, status)
+    roles, total = await RoleService.get_page(db, query.page_no, query.page_size, query.name, query.code, query.status)
     return page_success(
         list_data=[
             {
@@ -131,8 +127,8 @@ async def get_role_page(
             for r in roles
         ],
         total=total,
-        page_no=page_no,
-        page_size=page_size,
+        page_no=query.page_no,
+        page_size=query.page_size,
     )
 
 

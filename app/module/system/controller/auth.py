@@ -2,7 +2,7 @@
 认证控制器
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Request, Body, Header
+from fastapi import APIRouter, Depends, Request, Body, Header, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -61,16 +61,23 @@ async def logout(
 
 @router.post("/refresh-token", summary="刷新令牌")
 async def refresh_token(
-    req: RefreshTokenRequest,
+    refresh_token: str = Query(..., alias="refreshToken", description="刷新令牌"),
     db: AsyncSession = Depends(get_db),
 ):
     """
     刷新Token
 
-    - **refresh_token**: 刷新令牌
+    - **refreshToken**: 刷新令牌（Query参数）
     """
-    result = await AuthService.refresh_token(db, req.refresh_token)
-    return success(data=result)
+    access_token_do = await AuthService.refresh_token(db, refresh_token)
+
+    # 与 Java 版本的 AuthLoginRespVO 保持一致
+    return success(data={
+        "userId": access_token_do.user_id,
+        "accessToken": access_token_do.access_token,
+        "refreshToken": access_token_do.refresh_token,
+        "expiresTime": int(access_token_do.expires_time.timestamp() * 1000),
+    })
 
 
 @router.get("/get-permission-info", summary="获取登录用户的权限信息")

@@ -3,14 +3,15 @@
 """
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from app.common.schema import CamelModel, CamelORMModel
 from app.common.pagination import PageQuery
 
 
 # ==================== 操作日志 ====================
 
-class OperateLogResponse(BaseModel):
+class OperateLogResponse(CamelORMModel):
     """操作日志响应"""
 
     id: int = Field(..., description="日志ID")
@@ -28,8 +29,6 @@ class OperateLogResponse(BaseModel):
     user_agent: Optional[str] = Field(None, description="浏览器UA")
     create_time: Optional[datetime] = Field(None, description="创建时间")
 
-    model_config = {"from_attributes": True}
-
 
 class OperateLogPageQuery(PageQuery):
     """操作日志分页查询"""
@@ -42,7 +41,7 @@ class OperateLogPageQuery(PageQuery):
 
 # ==================== 登录日志 ====================
 
-class LoginLogResponse(BaseModel):
+class LoginLogResponse(CamelORMModel):
     """登录日志响应"""
 
     id: int = Field(..., description="日志ID")
@@ -55,8 +54,6 @@ class LoginLogResponse(BaseModel):
     user_ip: Optional[str] = Field(None, description="用户IP")
     user_agent: Optional[str] = Field(None, description="浏览器UA")
     create_time: Optional[datetime] = Field(None, description="登录时间")
-
-    model_config = {"from_attributes": True}
 
 
 class LoginLogPageQuery(PageQuery):

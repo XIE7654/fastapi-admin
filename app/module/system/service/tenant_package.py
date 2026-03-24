@@ -1,7 +1,8 @@
 """
 租户套餐服务
 """
-from typing import Optional, List
+import json
+from typing import Optional, List, Union
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -78,14 +79,22 @@ class TenantPackageService:
         name: str,
         status: int = 0,
         remark: str = None,
-        menu_ids: str = None,
+        menu_ids: Union[List[int], str] = None,
     ) -> int:
         """创建租户套餐"""
+        # 将列表转为 JSON 字符串存储
+        menu_ids_str = None
+        if menu_ids is not None:
+            if isinstance(menu_ids, list):
+                menu_ids_str = json.dumps(menu_ids)
+            else:
+                menu_ids_str = menu_ids
+
         package = TenantPackage(
             name=name,
             status=status,
             remark=remark,
-            menu_ids=menu_ids,
+            menu_ids=menu_ids_str,
         )
         db.add(package)
         await db.commit()
@@ -99,7 +108,7 @@ class TenantPackageService:
         name: str = None,
         status: int = None,
         remark: str = None,
-        menu_ids: str = None,
+        menu_ids: Union[List[int], str] = None,
     ) -> bool:
         """更新租户套餐"""
         package = await TenantPackageService.get_by_id(db, package_id)
@@ -113,7 +122,11 @@ class TenantPackageService:
         if remark is not None:
             package.remark = remark
         if menu_ids is not None:
-            package.menu_ids = menu_ids
+            # 将列表转为 JSON 字符串存储
+            if isinstance(menu_ids, list):
+                package.menu_ids = json.dumps(menu_ids)
+            else:
+                package.menu_ids = menu_ids
 
         await db.commit()
         return True

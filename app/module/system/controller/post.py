@@ -2,13 +2,14 @@
 岗位控制器
 """
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.post import PostService
+from app.module.system.schema.post import PostSave, PostPageQuery
 from app.common.response import success, page_success
 
 router = APIRouter()
@@ -16,30 +17,25 @@ router = APIRouter()
 
 @router.post("/create", summary="创建岗位")
 async def create_post(
-    name: str = Query(..., description="岗位名称"),
-    code: str = Query(..., description="岗位编码"),
-    sort: int = Query(0, description="显示顺序"),
-    remark: str = Query("", description="备注"),
+    req: PostSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:post:create")),
 ):
     """创建岗位"""
-    post_id = await PostService.create(db, name, code, sort, remark)
+    post_id = await PostService.create(db, req.name, req.code, req.sort, req.remark)
     return success(data=post_id)
 
 
 @router.put("/update", summary="修改岗位")
 async def update_post(
-    id: int = Query(..., description="岗位ID"),
-    name: str = Query(None, description="岗位名称"),
-    code: str = Query(None, description="岗位编码"),
-    sort: int = Query(None, description="显示顺序"),
-    remark: str = Query(None, description="备注"),
+    req: PostSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:post:update")),
 ):
     """更新岗位"""
-    await PostService.update(db, id, name, code, sort, remark)
+    if not req.id:
+        return success(data=False, message="岗位ID不能为空")
+    await PostService.update(db, req.id, req.name, req.code, req.sort, req.remark)
     return success(data=True)
 
 
@@ -51,6 +47,17 @@ async def delete_post(
 ):
     """删除岗位"""
     await PostService.delete(db, id)
+    return success(data=True)
+
+
+@router.delete("/delete-list", summary="批量删除岗位")
+async def delete_post_list(
+    ids: List[int] = Query(..., description="岗位ID列表"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:post:delete")),
+):
+    """批量删除岗位"""
+    await PostService.delete_list(db, ids)
     return success(data=True)
 
 
@@ -77,16 +84,12 @@ async def get_post(
 
 @router.get("/page", summary="获得岗位分页")
 async def get_post_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    name: str = Query(None, description="岗位名称"),
-    code: str = Query(None, description="岗位编码"),
-    status: int = Query(None, description="状态"),
+    query: PostPageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:post:query")),
 ):
     """分页查询岗位列表"""
-    posts, total = await PostService.get_page(db, page_no, page_size, name, code, status)
+    posts, total = await PostService.get_page(db, query.page_no, query.page_size, query.name, query.code, query.status)
     return page_success(
         list_data=[
             {
@@ -101,8 +104,8 @@ async def get_post_page(
             for p in posts
         ],
         total=total,
-        page_no=page_no,
-        page_size=page_size,
+        page_no=query.page_no,
+        page_size=query.page_size,
     )
 
 

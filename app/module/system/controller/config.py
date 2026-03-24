@@ -81,12 +81,11 @@ async def create_config(
 @router.put("/update", summary="更新参数配置")
 async def update_config(
     config_update: ConfigUpdate,
-    id: int = Query(..., description="配置ID"),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:config:update")),
 ):
     """更新参数配置"""
-    config = await ConfigService.update(db, id, config_update)
+    config = await ConfigService.update(db, config_update.id, config_update)
     return success(data=ConfigResponse.model_validate(config), msg="更新成功")
 
 

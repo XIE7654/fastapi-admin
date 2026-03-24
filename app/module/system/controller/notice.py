@@ -2,13 +2,14 @@
 通知公告控制器
 """
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.notice import NoticeService
+from app.module.system.schema.notice import NoticeSave
 from app.common.response import success, page_success
 
 router = APIRouter()
@@ -16,30 +17,25 @@ router = APIRouter()
 
 @router.post("/create", summary="创建通知公告")
 async def create_notice(
-    title: str = Query(..., description="公告标题"),
-    content: str = Query(..., description="公告内容"),
-    type: int = Query(..., description="公告类型: 1-通知, 2-公告"),
-    status: int = Query(0, description="状态"),
+    req: NoticeSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:notice:create")),
 ):
     """创建通知公告"""
-    notice_id = await NoticeService.create(db, title, content, type, status)
+    notice_id = await NoticeService.create(db, req.title, req.content, req.type, req.status)
     return success(data=notice_id)
 
 
 @router.put("/update", summary="修改通知公告")
 async def update_notice(
-    id: int = Query(..., description="公告ID"),
-    title: str = Query(None, description="公告标题"),
-    content: str = Query(None, description="公告内容"),
-    type: int = Query(None, description="公告类型"),
-    status: int = Query(None, description="状态"),
+    req: NoticeSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:notice:update")),
 ):
     """更新通知公告"""
-    await NoticeService.update(db, id, title, content, type, status)
+    if not req.id:
+        return success(data=False, message="公告ID不能为空")
+    await NoticeService.update(db, req.id, req.title, req.content, req.type, req.status)
     return success(data=True)
 
 

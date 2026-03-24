@@ -2,13 +2,14 @@
 字典控制器
 """
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.dict import DictService
+from app.module.system.schema.dict import DictTypeSave, DictDataSave, DictTypePageQuery, DictDataPageQuery
 from app.common.response import success, page_success
 
 # 字典类型路由
@@ -22,30 +23,25 @@ router_data = APIRouter()
 
 @router_type.post("/create", summary="创建字典类型")
 async def create_dict_type(
-    name: str = Query(..., description="字典名称"),
-    type: str = Query(..., description="字典类型"),
-    status: int = Query(0, description="状态"),
-    remark: str = Query("", description="备注"),
+    req: DictTypeSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dict:create")),
 ):
     """创建字典类型"""
-    dict_type_id = await DictService.create_dict_type(db, name, type, status, remark)
+    dict_type_id = await DictService.create_dict_type(db, req.name, req.type, req.status, req.remark)
     return success(data=dict_type_id)
 
 
 @router_type.put("/update", summary="修改字典类型")
 async def update_dict_type(
-    id: int = Query(..., description="字典类型ID"),
-    name: str = Query(None, description="字典名称"),
-    type: str = Query(None, description="字典类型"),
-    status: int = Query(None, description="状态"),
-    remark: str = Query(None, description="备注"),
+    req: DictTypeSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dict:update")),
 ):
     """更新字典类型"""
-    await DictService.update_dict_type(db, id, name, type, status, remark)
+    if not req.id:
+        return success(data=False, message="字典类型ID不能为空")
+    await DictService.update_dict_type(db, req.id, req.name, req.type, req.status, req.remark)
     return success(data=True)
 
 
@@ -73,16 +69,12 @@ async def delete_dict_type_list(
 
 @router_type.get("/page", summary="获得字典类型的分页列表")
 async def get_dict_type_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    name: str = Query(None, description="字典名称"),
-    type: str = Query(None, description="字典类型"),
-    status: int = Query(None, description="状态"),
+    query: DictTypePageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典类型列表"""
-    types, total = await DictService.get_dict_type_page(db, page_no, page_size, name, type, status)
+    types, total = await DictService.get_dict_type_page(db, query.page_no, query.page_size, query.name, query.type, query.status)
     return page_success(
         list_data=[
             {
@@ -96,8 +88,8 @@ async def get_dict_type_page(
             for t in types
         ],
         total=total,
-        page_no=page_no,
-        page_size=page_size,
+        page_no=query.page_no,
+        page_size=query.page_size,
     )
 
 
@@ -137,41 +129,28 @@ async def get_simple_dict_type_list(
 
 @router_data.post("/create", summary="新增字典数据")
 async def create_dict_data(
-    sort: int = Query(0, description="显示顺序"),
-    label: str = Query(..., description="字典标签"),
-    value: str = Query(..., description="字典键值"),
-    dict_type: str = Query(..., description="字典类型"),
-    status: int = Query(0, description="状态"),
-    color_type: str = Query(None, description="颜色类型"),
-    css_class: str = Query(None, description="CSS类名"),
-    remark: str = Query("", description="备注"),
+    req: DictDataSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dict:create")),
 ):
     """创建字典数据"""
     dict_data_id = await DictService.create_dict_data(
-        db, sort, label, value, dict_type, status, color_type, css_class, remark
+        db, req.sort, req.label, req.value, req.dict_type, req.status, req.color_type, req.css_class, req.remark
     )
     return success(data=dict_data_id)
 
 
 @router_data.put("/update", summary="修改字典数据")
 async def update_dict_data(
-    id: int = Query(..., description="字典数据ID"),
-    sort: int = Query(None, description="显示顺序"),
-    label: str = Query(None, description="字典标签"),
-    value: str = Query(None, description="字典键值"),
-    dict_type: str = Query(None, description="字典类型"),
-    status: int = Query(None, description="状态"),
-    color_type: str = Query(None, description="颜色类型"),
-    css_class: str = Query(None, description="CSS类名"),
-    remark: str = Query(None, description="备注"),
+    req: DictDataSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dict:update")),
 ):
     """更新字典数据"""
+    if not req.id:
+        return success(data=False, message="字典数据ID不能为空")
     await DictService.update_dict_data(
-        db, id, sort, label, value, dict_type, status, color_type, css_class, remark
+        db, req.id, req.sort, req.label, req.value, req.dict_type, req.status, req.color_type, req.css_class, req.remark
     )
     return success(data=True)
 
@@ -218,15 +197,12 @@ async def get_simple_dict_data_list(
 
 @router_data.get("/page", summary="获得字典数据的分页")
 async def get_dict_data_page(
-    page_no: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    dict_type: str = Query(None, description="字典类型"),
-    status: int = Query(None, description="状态"),
+    query: DictDataPageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dict:query")),
 ):
     """分页查询字典数据列表"""
-    data_list, total = await DictService.get_dict_data_page(db, page_no, page_size, dict_type, status)
+    data_list, total = await DictService.get_dict_data_page(db, query.page_no, query.page_size, query.dict_type, query.status)
     return page_success(
         list_data=[
             {
@@ -244,8 +220,8 @@ async def get_dict_data_page(
             for d in data_list
         ],
         total=total,
-        page_no=page_no,
-        page_size=page_size,
+        page_no=query.page_no,
+        page_size=query.page_size,
     )
 
 

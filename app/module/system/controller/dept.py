@@ -2,13 +2,14 @@
 部门控制器
 """
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.dept import DeptService
+from app.module.system.schema.dept import DeptSave
 from app.common.response import success
 
 router = APIRouter()
@@ -16,36 +17,29 @@ router = APIRouter()
 
 @router.post("/create", summary="创建部门")
 async def create_dept(
-    name: str = Query(..., description="部门名称"),
-    parent_id: int = Query(0, description="父部门ID"),
-    sort: int = Query(0, description="显示顺序"),
-    leader_user_id: int = Query(None, description="负责人用户ID"),
-    phone: str = Query(None, description="联系电话"),
-    email: str = Query(None, description="邮箱"),
-    status: int = Query(0, description="状态"),
+    req: DeptSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dept:create")),
 ):
     """创建部门"""
-    dept_id = await DeptService.create(db, name, parent_id, sort, leader_user_id, phone, email, status)
+    dept_id = await DeptService.create(
+        db, req.name, req.parent_id, req.sort, req.leader_user_id, req.phone, req.email, req.status
+    )
     return success(data=dept_id)
 
 
 @router.put("/update", summary="修改部门")
 async def update_dept(
-    id: int = Query(..., description="部门ID"),
-    name: str = Query(None, description="部门名称"),
-    parent_id: int = Query(None, description="父部门ID"),
-    sort: int = Query(None, description="显示顺序"),
-    leader_user_id: int = Query(None, description="负责人用户ID"),
-    phone: str = Query(None, description="联系电话"),
-    email: str = Query(None, description="邮箱"),
-    status: int = Query(None, description="状态"),
+    req: DeptSave = Body(...),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(check_permission("system:dept:update")),
 ):
     """更新部门"""
-    await DeptService.update(db, id, name, parent_id, sort, leader_user_id, phone, email, status)
+    if not req.id:
+        return success(data=False, message="部门ID不能为空")
+    await DeptService.update(
+        db, req.id, req.name, req.parent_id, req.sort, req.leader_user_id, req.phone, req.email, req.status
+    )
     return success(data=True)
 
 

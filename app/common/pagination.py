@@ -5,13 +5,9 @@ from typing import Generic, TypeVar, List, Optional, Any
 from dataclasses import dataclass
 from pydantic import BaseModel, Field, AliasGenerator
 
+from app.common.schema import to_camel
+
 T = TypeVar("T")
-
-
-def to_camel(string: str) -> str:
-    """将下划线命名转换为驼峰命名"""
-    components = string.split('_')
-    return components[0] + ''.join(x.title() for x in components[1:])
 
 
 @dataclass

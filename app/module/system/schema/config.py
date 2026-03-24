@@ -3,12 +3,13 @@
 """
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
+from app.common.schema import CamelModel, CamelORMModel
 from app.common.pagination import PageQuery
 
 
-class ConfigBase(BaseModel):
+class ConfigBase(CamelModel):
     """参数配置基础信息"""
 
     category: Optional[str] = Field(None, max_length=50, description="参数分类")
@@ -36,9 +37,10 @@ class ConfigCreate(ConfigBase):
         return v.strip()
 
 
-class ConfigUpdate(BaseModel):
+class ConfigUpdate(CamelModel):
     """更新参数配置请求"""
 
+    id: int = Field(..., description="参数ID")
     category: Optional[str] = Field(None, max_length=50, description="参数分类")
     name: Optional[str] = Field(None, max_length=100, description="参数名称")
     value: Optional[str] = Field(None, max_length=500, description="参数键值")
@@ -46,13 +48,18 @@ class ConfigUpdate(BaseModel):
     remark: Optional[str] = Field(None, max_length=500, description="备注")
 
 
-class ConfigResponse(ConfigBase):
+class ConfigResponse(CamelORMModel):
     """参数配置响应"""
 
     id: int = Field(..., description="参数ID")
+    category: Optional[str] = Field(None, description="参数分类")
+    name: Optional[str] = Field(None, description="参数名称")
+    key: Optional[str] = Field(None, description="参数键名")
+    value: Optional[str] = Field(None, description="参数键值")
+    type: Optional[int] = Field(default=1, description="参数类型")
+    visible: Optional[int] = Field(default=0, description="是否可见")
+    remark: Optional[str] = Field(None, description="备注")
     create_time: Optional[datetime] = Field(None, description="创建时间")
-
-    model_config = {"from_attributes": True}
 
 
 class ConfigPageQuery(PageQuery):

@@ -113,6 +113,9 @@ async def get_user_page(
     # 构建响应数据，添加部门名称
     user_responses = []
     for u in users:
+        # 处理 post_ids 字符串转列表
+        post_ids_list = u.get_post_ids_list() if u.post_ids else []
+
         user_dict = {
             "id": u.id,
             "username": u.username,
@@ -122,7 +125,7 @@ async def get_user_page(
             "gender": u.gender,
             "dept_id": u.dept_id,
             "dept_name": dept_map.get(u.dept_id) if u.dept_id else None,
-            "post_ids": u.post_ids,
+            "post_ids": post_ids_list,
             "status": u.status,
             "remark": u.remark,
             "avatar": u.avatar,

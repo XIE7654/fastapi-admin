@@ -2,11 +2,12 @@
 认证相关Schema
 """
 from typing import Optional, List
-from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from app.common.schema import CamelModel, CamelORMModel
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(CamelModel):
     """登录请求"""
 
     username: str = Field(..., description="用户账号")
@@ -27,14 +28,14 @@ class LoginRequest(BaseModel):
     }
 
 
-class SmsLoginRequest(BaseModel):
+class SmsLoginRequest(CamelModel):
     """短信登录请求"""
 
     mobile: str = Field(..., description="手机号码")
     code: str = Field(..., description="短信验证码")
 
 
-class TokenResponse(BaseModel):
+class TokenResponse(CamelModel):
     """Token响应"""
 
     access_token: str = Field(..., description="访问令牌")
@@ -43,37 +44,44 @@ class TokenResponse(BaseModel):
     expires_in: int = Field(..., description="过期时间(秒)")
 
 
-class LoginResponse(BaseModel):
-    """登录响应"""
+class LoginResponse(CamelModel):
+    """登录响应 - 与 Java AuthLoginRespVO 保持一致"""
 
-    user_id: int = Field(..., alias="userId", description="用户ID")
-    access_token: str = Field(..., alias="accessToken", description="访问令牌")
-    refresh_token: str = Field(..., alias="refreshToken", description="刷新令牌")
-    expires_time: int = Field(..., alias="expiresTime", description="过期时间戳(毫秒)")
-
-    model_config = {"populate_by_name": True}
+    user_id: int = Field(..., description="用户ID")
+    access_token: str = Field(..., description="访问令牌")
+    refresh_token: str = Field(..., description="刷新令牌")
+    expires_time: int = Field(..., description="过期时间戳(毫秒)")
 
 
-class RefreshTokenRequest(BaseModel):
+class RefreshTokenResponse(CamelModel):
+    """刷新Token响应 - 与 Java AuthLoginRespVO 保持一致"""
+
+    user_id: int = Field(..., description="用户ID")
+    access_token: str = Field(..., description="访问令牌")
+    refresh_token: str = Field(..., description="刷新令牌")
+    expires_time: int = Field(..., description="过期时间戳(毫秒)")
+
+
+class RefreshTokenRequest(CamelModel):
     """刷新Token请求"""
 
     refresh_token: str = Field(..., description="刷新令牌")
 
 
-class LogoutRequest(BaseModel):
+class LogoutRequest(CamelModel):
     """登出请求"""
 
     token: Optional[str] = Field(None, description="访问令牌")
 
 
-class CaptchaResponse(BaseModel):
+class CaptchaResponse(CamelModel):
     """验证码响应"""
 
     uuid: str = Field(..., description="验证码唯一标识")
     img: str = Field(..., description="验证码图片Base64")
 
 
-class PermissionInfoResponse(BaseModel):
+class PermissionInfoResponse(CamelModel):
     """用户权限信息响应"""
 
     user: dict = Field(..., description="用户信息")
@@ -82,7 +90,7 @@ class PermissionInfoResponse(BaseModel):
     menus: List[dict] = Field(default_factory=list, description="菜单列表")
 
 
-class MenuVO(BaseModel):
+class MenuVO(CamelORMModel):
     """菜单VO"""
 
     id: int = Field(..., description="菜单ID")
@@ -98,5 +106,3 @@ class MenuVO(BaseModel):
     type: int = Field(..., description="类型: 1-目录, 2-菜单, 3-按钮")
     permission: Optional[str] = Field(None, description="权限标识")
     children: List['MenuVO'] = Field(default_factory=list, description="子菜单")
-
-    model_config = {"from_attributes": True}
