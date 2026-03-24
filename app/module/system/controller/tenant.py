@@ -1,7 +1,7 @@
 """
 租户控制器
 """
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,8 +11,12 @@ from app.core.dependencies import get_current_user, check_permission
 from app.module.system.model.user import User
 from app.module.system.service.tenant import TenantService
 from app.common.response import success, page_success
+from app.common.excel import ExcelUtils
 
 router = APIRouter()
+
+# 状态字典
+STATUS_DICT = {0: "开启", 1: "禁用"}
 
 
 @router.get("/simple-list", summary="获取租户精简信息列表")
@@ -140,3 +144,41 @@ async def get_tenant(
         "remark": tenant.remark,
         "createTime": tenant.create_time,
     })
+
+
+@router.get("/export-excel", summary="导出租户 Excel")
+async def export_tenant_excel(
+    name: Optional[str] = Query(None, description="租户名"),
+    contact_name: Optional[str] = Query(None, alias="contactName", description="联系人"),
+    contact_mobile: Optional[str] = Query(None, alias="contactMobile", description="联系手机"),
+    status: Optional[int] = Query(None, description="状态"),
+    package_id: Optional[int] = Query(None, alias="packageId", description="租户套餐编号"),
+    create_time: List[datetime] = Query(None, alias="createTime", description="创建时间"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:tenant:export")),
+):
+    """导出租户 Excel"""
+    # 获取数据
+    tenants = await TenantService.get_export_list(
+        db, name=name, contact_name=contact_name, contact_mobile=contact_mobile,
+        status=status, package_id=package_id, create_time=create_time
+    )
+
+    # 定义表头和字段
+    headers = ["租户编号", "租户名", "联系人", "联系手机", "状态", "绑定域名", "租户套餐编号", "过期时间", "账号数量", "备注", "创建时间"]
+    fields = ["id", "name", "contact_name", "contact_mobile", "status", "websites", "package_id", "expire_time", "account_count", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=tenants,
+        headers=headers,
+        fields=fields,
+        filename="租户数据.xlsx",
+        sheet_name="租户列表",
+        converters=converters,
+    )

@@ -1,7 +1,7 @@
 """
 角色控制器
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,8 +11,18 @@ from app.module.system.model.user import User
 from app.module.system.service.role import RoleService
 from app.module.system.schema.role import RoleSave, RolePageQuery
 from app.common.response import success, page_success
+from app.common.excel import ExcelUtils
 
 router = APIRouter()
+
+# 状态字典
+STATUS_DICT = {0: "开启", 1: "禁用"}
+
+# 角色类型字典
+ROLE_TYPE_DICT = {1: "系统内置", 2: "自定义"}
+
+# 数据权限字典
+DATA_SCOPE_DICT = {1: "全部数据权限", 2: "指定部门数据权限", 3: "本部门数据权限", 4: "本部门及以下数据权限", 5: "仅本人数据权限"}
 
 
 @router.post("/create", summary="创建角色")
@@ -145,3 +155,37 @@ async def get_simple_role_list(
         {"id": r.id, "name": r.name, "code": r.code}
         for r in enabled_roles
     ])
+
+
+@router.get("/export-excel", summary="导出角色 Excel")
+async def export_role_excel(
+    name: Optional[str] = Query(None, description="角色名称"),
+    code: Optional[str] = Query(None, description="角色编码"),
+    status: Optional[int] = Query(None, ge=0, le=1, description="状态"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:role:export")),
+):
+    """导出角色 Excel"""
+    # 获取数据
+    roles = await RoleService.get_list(db, name=name, code=code, status=status)
+
+    # 定义表头和字段
+    headers = ["角色编号", "角色名称", "角色编码", "显示顺序", "数据范围", "数据范围部门编号", "状态", "角色类型", "备注", "创建时间"]
+    fields = ["id", "name", "code", "sort", "data_scope", "data_scope_dept_ids", "status", "type", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+        "type": lambda v: ROLE_TYPE_DICT.get(v, v),
+        "data_scope": lambda v: DATA_SCOPE_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=roles,
+        headers=headers,
+        fields=fields,
+        filename="角色数据.xlsx",
+        sheet_name="角色列表",
+        converters=converters,
+    )

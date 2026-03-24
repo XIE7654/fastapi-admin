@@ -75,6 +75,36 @@ class UserService:
         return list(users), total
 
     @staticmethod
+    async def get_export_list(
+        db: AsyncSession,
+        username: Optional[str] = None,
+        nickname: Optional[str] = None,
+        mobile: Optional[str] = None,
+        status: Optional[int] = None,
+        dept_id: Optional[int] = None,
+    ) -> List[User]:
+        """获取用户列表（不分页，用于导出）"""
+        conditions = [User.deleted == 0]
+
+        if username:
+            conditions.append(User.username.like(f"%{username}%"))
+        if nickname:
+            conditions.append(User.nickname.like(f"%{nickname}%"))
+        if mobile:
+            conditions.append(User.mobile.like(f"%{mobile}%"))
+        if status is not None:
+            conditions.append(User.status == status)
+        if dept_id:
+            conditions.append(User.dept_id == dept_id)
+
+        result = await db.execute(
+            select(User)
+            .where(and_(*conditions))
+            .order_by(User.id.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
     async def create(db: AsyncSession, user_create: UserCreate) -> User:
         """创建用户"""
         # 检查用户名是否存在

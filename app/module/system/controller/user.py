@@ -1,7 +1,7 @@
 """
 用户控制器
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,8 +22,15 @@ from app.module.system.schema.user import (
 )
 from app.common.response import success, error, page_success
 from app.common.decorators import operate_log
+from app.common.excel import ExcelUtils
 
 router = APIRouter()
+
+# 状态字典
+STATUS_DICT = {0: "开启", 1: "禁用"}
+
+# 性别字典
+GENDER_DICT = {0: "未知", 1: "男", 2: "女"}
 
 
 @router.post("/create", summary="新增用户")
@@ -183,3 +190,68 @@ async def get_user(
     if not user:
         return success(data=None)
     return success(data=UserResponse.model_validate(user))
+
+
+@router.get("/export-excel", summary="导出用户 Excel")
+async def export_user_excel(
+    username: Optional[str] = Query(None, description="用户账号"),
+    nickname: Optional[str] = Query(None, description="用户昵称"),
+    mobile: Optional[str] = Query(None, description="手机号"),
+    status: Optional[int] = Query(None, ge=0, le=1, description="状态"),
+    dept_id: Optional[int] = Query(None, alias="deptId", description="部门ID"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:user:export")),
+):
+    """导出用户 Excel"""
+    # 获取数据
+    users = await UserService.get_export_list(
+        db, username=username, nickname=nickname, mobile=mobile, status=status, dept_id=dept_id
+    )
+
+    # 批量获取部门名称
+    dept_ids = [u.dept_id for u in users if u.dept_id]
+    dept_map = {}
+    if dept_ids:
+        from sqlalchemy import select
+        result = await db.execute(
+            select(Dept.id, Dept.name).where(Dept.id.in_(dept_ids), Dept.deleted == 0)
+        )
+        dept_map = {row.id: row.name for row in result.all()}
+
+    # 构建导出数据
+    export_data = []
+    for u in users:
+        export_data.append({
+            "id": u.id,
+            "username": u.username,
+            "nickname": u.nickname,
+            "dept_name": dept_map.get(u.dept_id, "") if u.dept_id else "",
+            "mobile": u.mobile,
+            "gender": u.gender,
+            "email": u.email,
+            "status": u.status,
+            "login_ip": u.login_ip,
+            "login_date": u.login_date,
+            "remark": u.remark,
+            "create_time": u.create_time,
+        })
+
+    # 定义表头和字段
+    headers = ["用户编号", "用户账号", "用户昵称", "所属部门", "手机号码", "性别", "邮箱", "状态", "最后登录IP", "最后登录时间", "备注", "创建时间"]
+    fields = ["id", "username", "nickname", "dept_name", "mobile", "gender", "email", "status", "login_ip", "login_date", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+        "gender": lambda v: GENDER_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=export_data,
+        headers=headers,
+        fields=fields,
+        filename="用户数据.xlsx",
+        sheet_name="用户列表",
+        converters=converters,
+    )

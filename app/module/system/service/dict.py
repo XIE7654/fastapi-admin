@@ -63,6 +63,48 @@ class DictService:
         return list(types), total
 
     @staticmethod
+    async def get_dict_type_list(
+        db: AsyncSession,
+        name: Optional[str] = None,
+        type: Optional[str] = None,
+        status: Optional[int] = None,
+    ) -> List[DictType]:
+        """获取字典类型列表（不分页，用于导出）"""
+        query = select(DictType).where(DictType.deleted == 0)
+
+        if name:
+            query = query.where(DictType.name.like(f"%{name}%"))
+        if type:
+            query = query.where(DictType.type.like(f"%{type}%"))
+        if status is not None:
+            query = query.where(DictType.status == status)
+
+        query = query.order_by(DictType.id.desc())
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_dict_data_export_list(
+        db: AsyncSession,
+        dict_type: Optional[str] = None,
+        label: Optional[str] = None,
+        status: Optional[int] = None,
+    ) -> List[DictData]:
+        """获取字典数据列表（不分页，用于导出）"""
+        query = select(DictData).where(DictData.deleted == 0)
+
+        if dict_type:
+            query = query.where(DictData.dict_type == dict_type)
+        if label:
+            query = query.where(DictData.label.like(f"%{label}%"))
+        if status is not None:
+            query = query.where(DictData.status == status)
+
+        query = query.order_by(DictData.dict_type.desc(), DictData.sort.desc())
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
     async def get_dict_data_by_id(db: AsyncSession, data_id: int) -> Optional[DictData]:
         """根据ID获取字典数据"""
         result = await db.execute(

@@ -80,6 +80,39 @@ class LoginLogService:
         return list(logs), total
 
     @staticmethod
+    async def get_export_list(
+        db: AsyncSession,
+        user_id: Optional[int] = None,
+        username: Optional[str] = None,
+        log_type: Optional[int] = None,
+        result: Optional[int] = None,
+        user_ip: Optional[str] = None,
+        create_time: Optional[List] = None,
+    ) -> List[LoginLog]:
+        """获取登录日志列表（不分页，用于导出）"""
+        conditions = [LoginLog.deleted == 0]
+
+        if user_id:
+            conditions.append(LoginLog.user_id == user_id)
+        if username:
+            conditions.append(LoginLog.username.like(f"%{username}%"))
+        if log_type:
+            conditions.append(LoginLog.log_type == log_type)
+        if result is not None:
+            conditions.append(LoginLog.result == result)
+        if user_ip:
+            conditions.append(LoginLog.user_ip.like(f"%{user_ip}%"))
+        if create_time and len(create_time) == 2:
+            conditions.append(LoginLog.create_time.between(create_time[0], create_time[1]))
+
+        result = await db.execute(
+            select(LoginLog)
+            .where(and_(*conditions))
+            .order_by(LoginLog.id.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
     async def create_login_log(
         db: AsyncSession,
         user_id: int,

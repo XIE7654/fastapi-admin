@@ -7,14 +7,13 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, Border, Side
 
 from app.core.database import get_db
 from app.core.dependencies import check_permission
 from app.module.system.model.user import User
 from app.module.system.service.sms_log import SmsLogService
 from app.common.response import success, page_success
+from app.common.excel import ExcelUtils
 
 router = APIRouter()
 
@@ -156,12 +155,7 @@ async def export_sms_log_excel(
         receive_time=receive_time,
     )
 
-    # 创建工作簿
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "短信日志"
-
-    # 定义表头
+    # 定义表头和字段
     headers = [
         "编号", "短信渠道编号", "短信渠道编码", "模板编号", "模板编码",
         "短信类型", "短信内容", "短信参数", "短信API的模板编号",
@@ -170,78 +164,29 @@ async def export_sms_log_excel(
         "短信API发送返回的序号", "接收状态", "接收时间",
         "API接收结果的编码", "API接收结果的说明", "创建时间"
     ]
+    fields = [
+        "id", "channel_id", "channel_code", "template_id", "template_code",
+        "template_type", "template_content", "template_params", "api_template_id",
+        "mobile", "user_id", "user_type", "send_status", "send_time",
+        "api_send_code", "api_send_msg", "api_request_id",
+        "api_serial_no", "receive_status", "receive_time",
+        "api_receive_code", "api_receive_msg", "create_time"
+    ]
 
-    # 设置表头样式
-    header_font = Font(bold=True)
-    header_alignment = Alignment(horizontal="center", vertical="center")
-    thin_border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
-    )
+    # 定义转换器
+    converters = {
+        "template_type": lambda v: SMS_TEMPLATE_TYPE_DICT.get(v, v),
+        "user_type": lambda v: USER_TYPE_DICT.get(v, v) if v else None,
+        "send_status": lambda v: SMS_SEND_STATUS_DICT.get(v, v),
+        "receive_status": lambda v: SMS_RECEIVE_STATUS_DICT.get(v, v),
+    }
 
-    # 写入表头
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col, value=header)
-        cell.font = header_font
-        cell.alignment = header_alignment
-        cell.border = thin_border
-
-    # 写入数据
-    for row, log in enumerate(logs, 2):
-        data_row = [
-            log.id,
-            log.channel_id,
-            log.channel_code,
-            log.template_id,
-            log.template_code,
-            SMS_TEMPLATE_TYPE_DICT.get(log.template_type, log.template_type),
-            log.template_content,
-            log.template_params,
-            log.api_template_id,
-            log.mobile,
-            log.user_id,
-            USER_TYPE_DICT.get(log.user_type, log.user_type) if log.user_type else None,
-            SMS_SEND_STATUS_DICT.get(log.send_status, log.send_status),
-            log.send_time.strftime("%Y-%m-%d %H:%M:%S") if log.send_time else None,
-            log.api_send_code,
-            log.api_send_msg,
-            log.api_request_id,
-            log.api_serial_no,
-            SMS_RECEIVE_STATUS_DICT.get(log.receive_status, log.receive_status),
-            log.receive_time.strftime("%Y-%m-%d %H:%M:%S") if log.receive_time else None,
-            log.api_receive_code,
-            log.api_receive_msg,
-            log.create_time.strftime("%Y-%m-%d %H:%M:%S") if log.create_time else None,
-        ]
-        for col, value in enumerate(data_row, 1):
-            cell = ws.cell(row=row, column=col, value=value)
-            cell.border = thin_border
-
-    # 自动调整列宽
-    for col in ws.columns:
-        max_length = 0
-        column = col[0].column_letter
-        for cell in col:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            except:
-                pass
-        adjusted_width = min(max_length + 2, 50)
-        ws.column_dimensions[column].width = adjusted_width
-
-    # 保存到内存
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
-
-    # 返回文件流
-    return StreamingResponse(
-        output,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={
-            "Content-Disposition": "attachment; filename=sms_log.xlsx"
-        }
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=logs,
+        headers=headers,
+        fields=fields,
+        filename="短信日志.xlsx",
+        sheet_name="短信日志",
+        converters=converters,
     )

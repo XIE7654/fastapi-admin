@@ -256,3 +256,33 @@ class SmsTemplateService:
         items = list(result.scalars().all())
 
         return items, total
+
+    @staticmethod
+    async def get_export_list(
+        db: AsyncSession,
+        status: int = None,
+        name: str = None,
+        code: str = None,
+        channel_id: int = None,
+    ) -> List:
+        """获取短信模板列表（不分页，用于导出）"""
+        from app.module.system.model.sms import SmsTemplate
+
+        conditions = []
+
+        if status is not None:
+            conditions.append(SmsTemplate.status == status)
+        if name:
+            conditions.append(SmsTemplate.name.like(f"%{name}%"))
+        if code:
+            conditions.append(SmsTemplate.code.like(f"%{code}%"))
+        if channel_id is not None:
+            conditions.append(SmsTemplate.channel_id == channel_id)
+
+        query = select(SmsTemplate)
+        if conditions:
+            query = query.where(*conditions)
+        query = query.order_by(SmsTemplate.id.desc())
+
+        result = await db.execute(query)
+        return list(result.scalars().all())

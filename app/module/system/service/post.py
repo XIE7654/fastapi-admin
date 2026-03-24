@@ -71,6 +71,28 @@ class PostService:
         return list(posts), total
 
     @staticmethod
+    async def get_list(
+        db: AsyncSession,
+        name: Optional[str] = None,
+        code: Optional[str] = None,
+        status: Optional[int] = None,
+    ) -> List[Post]:
+        """获取岗位列表（不分页，用于导出）"""
+        query = select(Post).where(Post.deleted == 0)
+
+        if name:
+            query = query.where(Post.name.like(f"%{name}%"))
+        if code:
+            query = query.where(Post.code.like(f"%{code}%"))
+        if status is not None:
+            query = query.where(Post.status == status)
+
+        # 按 id 降序
+        query = query.order_by(Post.id.desc())
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
     async def get_by_ids(db: AsyncSession, post_ids: List[int]) -> List[Post]:
         """根据ID列表获取岗位"""
         if not post_ids:

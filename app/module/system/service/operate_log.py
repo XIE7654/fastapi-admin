@@ -110,6 +110,60 @@ class OperateLogService:
         return logs, total
 
     @staticmethod
+    async def get_export_list(
+        db: AsyncSession,
+        user_id: Optional[int] = None,
+        type: Optional[str] = None,
+        sub_type: Optional[str] = None,
+        create_time: Optional[List] = None,
+    ) -> List[dict]:
+        """获取操作日志列表（不分页，用于导出）"""
+        conditions = [OperateLog.deleted == 0]
+
+        if user_id:
+            conditions.append(OperateLog.user_id == user_id)
+        if type:
+            conditions.append(OperateLog.type.like(f"%{type}%"))
+        if sub_type:
+            conditions.append(OperateLog.sub_type.like(f"%{sub_type}%"))
+        if create_time and len(create_time) == 2:
+            conditions.append(OperateLog.create_time.between(create_time[0], create_time[1]))
+
+        # 查询，关联 User 表获取用户昵称
+        result = await db.execute(
+            select(OperateLog, User.nickname)
+            .outerjoin(User, OperateLog.user_id == User.id)
+            .where(and_(*conditions))
+            .order_by(OperateLog.id.desc())
+        )
+        rows = result.all()
+
+        # 组装结果
+        logs = []
+        for row in rows:
+            log = row[0]
+            user_name = row[1]
+            logs.append({
+                "id": log.id,
+                "trace_id": log.trace_id,
+                "user_id": log.user_id,
+                "user_name": user_name,
+                "user_type": log.user_type,
+                "type": log.type,
+                "sub_type": log.sub_type,
+                "biz_id": log.biz_id,
+                "action": log.action,
+                "extra": log.extra,
+                "request_method": log.request_method,
+                "request_url": log.request_url,
+                "user_ip": log.user_ip,
+                "user_agent": log.user_agent,
+                "create_time": log.create_time,
+            })
+
+        return logs
+
+    @staticmethod
     async def delete_by_ids(db: AsyncSession, log_ids: List[int]) -> int:
         """批量删除操作日志"""
         count = 0

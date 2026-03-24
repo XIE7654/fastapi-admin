@@ -1,7 +1,7 @@
 """
 岗位控制器
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,8 +11,12 @@ from app.module.system.model.user import User
 from app.module.system.service.post import PostService
 from app.module.system.schema.post import PostSave, PostPageQuery
 from app.common.response import success, page_success
+from app.common.excel import ExcelUtils
 
 router = APIRouter()
+
+# 状态字典
+STATUS_DICT = {0: "开启", 1: "禁用"}
 
 
 @router.post("/create", summary="创建岗位")
@@ -122,3 +126,35 @@ async def get_simple_post_list(
         {"id": p.id, "name": p.name, "code": p.code}
         for p in enabled_posts
     ])
+
+
+@router.get("/export-excel", summary="导出岗位 Excel")
+async def export_post_excel(
+    name: Optional[str] = Query(None, description="岗位名称"),
+    code: Optional[str] = Query(None, description="岗位编码"),
+    status: Optional[int] = Query(None, ge=0, le=1, description="状态"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:post:export")),
+):
+    """导出岗位 Excel"""
+    # 获取数据
+    posts = await PostService.get_list(db, name=name, code=code, status=status)
+
+    # 定义表头和字段
+    headers = ["岗位编号", "岗位名称", "岗位编码", "显示顺序", "状态", "备注", "创建时间"]
+    fields = ["id", "name", "code", "sort", "status", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=posts,
+        headers=headers,
+        fields=fields,
+        filename="岗位数据.xlsx",
+        sheet_name="岗位列表",
+        converters=converters,
+    )

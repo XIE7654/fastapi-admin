@@ -1,7 +1,8 @@
 """
 字典控制器
 """
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,12 +12,16 @@ from app.module.system.model.user import User
 from app.module.system.service.dict import DictService
 from app.module.system.schema.dict import DictTypeSave, DictDataSave, DictTypePageQuery, DictDataPageQuery
 from app.common.response import success, page_success
+from app.common.excel import ExcelUtils
 
 # 字典类型路由
 router_type = APIRouter()
 
 # 字典数据路由
 router_data = APIRouter()
+
+# 状态字典
+STATUS_DICT = {0: "开启", 1: "禁用"}
 
 
 # ==================== 字典类型接口 ====================
@@ -260,3 +265,67 @@ async def get_dict_data(
         "remark": dict_data.remark,
         "createTime": dict_data.create_time,
     })
+
+
+@router_type.get("/export-excel", summary="导出字典类型 Excel")
+async def export_dict_type_excel(
+    name: Optional[str] = Query(None, description="字典名称"),
+    type: Optional[str] = Query(None, description="字典类型"),
+    status: Optional[int] = Query(None, ge=0, le=1, description="状态"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:export")),
+):
+    """导出字典类型 Excel"""
+    # 获取数据
+    types = await DictService.get_dict_type_list(db, name=name, type=type, status=status)
+
+    # 定义表头和字段
+    headers = ["字典编号", "字典名称", "字典类型", "状态", "备注", "创建时间"]
+    fields = ["id", "name", "type", "status", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=types,
+        headers=headers,
+        fields=fields,
+        filename="字典类型.xlsx",
+        sheet_name="字典类型",
+        converters=converters,
+    )
+
+
+@router_data.get("/export-excel", summary="导出字典数据 Excel")
+async def export_dict_data_excel(
+    dict_type: Optional[str] = Query(None, alias="dictType", description="字典类型"),
+    label: Optional[str] = Query(None, description="字典标签"),
+    status: Optional[int] = Query(None, ge=0, le=1, description="状态"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:dict:export")),
+):
+    """导出字典数据 Excel"""
+    # 获取数据
+    data_list = await DictService.get_dict_data_export_list(db, dict_type=dict_type, label=label, status=status)
+
+    # 定义表头和字段
+    headers = ["字典编码", "字典排序", "字典标签", "字典键值", "字典类型", "状态", "颜色类型", "css 样式", "备注", "创建时间"]
+    fields = ["id", "sort", "label", "value", "dict_type", "status", "color_type", "css_class", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=data_list,
+        headers=headers,
+        fields=fields,
+        filename="字典数据.xlsx",
+        sheet_name="字典数据",
+        converters=converters,
+    )

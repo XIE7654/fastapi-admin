@@ -82,6 +82,28 @@ class RoleService:
         return list(roles), total
 
     @staticmethod
+    async def get_list(
+        db: AsyncSession,
+        name: Optional[str] = None,
+        code: Optional[str] = None,
+        status: Optional[int] = None,
+    ) -> List[Role]:
+        """获取角色列表（不分页，用于导出）"""
+        query = select(Role).where(Role.deleted == 0)
+
+        if name:
+            query = query.where(Role.name.like(f"%{name}%"))
+        if code:
+            query = query.where(Role.code.like(f"%{code}%"))
+        if status is not None:
+            query = query.where(Role.status == status)
+
+        # 按 sort 升序
+        query = query.order_by(Role.sort.asc())
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
     async def get_role_menu_ids(db: AsyncSession, role_id: int) -> List[int]:
         """获取角色的菜单ID列表"""
         result = await db.execute(

@@ -142,3 +142,36 @@ class TenantService:
         items = list(result.scalars().all())
 
         return items, total
+
+    @staticmethod
+    async def get_export_list(
+        db: AsyncSession,
+        name: str = None,
+        contact_name: str = None,
+        contact_mobile: str = None,
+        status: int = None,
+        package_id: int = None,
+        create_time: List[datetime] = None,
+    ) -> List[Tenant]:
+        """获取租户列表（不分页，用于导出）"""
+        conditions = []
+        if name:
+            conditions.append(Tenant.name.like(f"%{name}%"))
+        if contact_name:
+            conditions.append(Tenant.contact_name.like(f"%{contact_name}%"))
+        if contact_mobile:
+            conditions.append(Tenant.contact_mobile.like(f"%{contact_mobile}%"))
+        if status is not None:
+            conditions.append(Tenant.status == status)
+        if package_id is not None:
+            conditions.append(Tenant.package_id == package_id)
+        if create_time and len(create_time) == 2:
+            conditions.append(Tenant.create_time.between(create_time[0], create_time[1]))
+
+        query = select(Tenant)
+        if conditions:
+            query = query.where(*conditions)
+        query = query.order_by(Tenant.id.desc())
+
+        result = await db.execute(query)
+        return list(result.scalars().all())

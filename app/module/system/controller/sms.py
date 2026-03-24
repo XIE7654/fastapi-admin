@@ -2,6 +2,7 @@
 短信控制器
 """
 from typing import List, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from pydantic import Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,7 @@ from app.module.system.model.user import User
 from app.module.system.service.sms import SmsChannelService, SmsTemplateService
 from app.common.response import success, page_success
 from app.common.schema import CamelModel
+from app.common.excel import ExcelUtils
 
 
 # ==================== 请求 Schema ====================
@@ -57,6 +59,9 @@ router_channel = APIRouter()
 
 # 短信模板路由
 router_template = APIRouter()
+
+# 状态字典
+STATUS_DICT = {0: "开启", 1: "禁用"}
 
 
 # ==================== 短信渠道接口 ====================
@@ -296,3 +301,38 @@ async def get_sms_template(
         "remark": template.remark,
         "createTime": template.create_time,
     })
+
+
+@router_template.get("/export-excel", summary="导出短信模板 Excel")
+async def export_sms_template_excel(
+    status: Optional[int] = Query(None, description="状态"),
+    name: Optional[str] = Query(None, description="模板名称"),
+    code: Optional[str] = Query(None, description="模板编码"),
+    channel_id: Optional[int] = Query(None, alias="channelId", description="短信渠道编号"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(check_permission("system:sms-template:export")),
+):
+    """导出短信模板 Excel"""
+    # 获取数据
+    templates = await SmsTemplateService.get_export_list(
+        db, status=status, name=name, code=code, channel_id=channel_id
+    )
+
+    # 定义表头和字段
+    headers = ["模板编号", "模板名称", "模板编码", "短信渠道编号", "短信渠道编码", "模板内容", "参数数组", "状态", "备注", "创建时间"]
+    fields = ["id", "name", "code", "channel_id", "channel_code", "content", "params", "status", "remark", "create_time"]
+
+    # 定义转换器
+    converters = {
+        "status": lambda v: STATUS_DICT.get(v, v),
+    }
+
+    # 导出 Excel
+    return ExcelUtils.export_excel(
+        data=templates,
+        headers=headers,
+        fields=fields,
+        filename="短信模板.xlsx",
+        sheet_name="短信模板",
+        converters=converters,
+    )

@@ -92,6 +92,86 @@ class MenuService:
         return {row[0] for row in result.all() if row[0]}
 
     @staticmethod
+    async def create(
+        db: AsyncSession,
+        name: str,
+        permission: str,
+        type: int,
+        sort: int,
+        parent_id: int,
+        path: str,
+        icon: str,
+        component: str,
+        component_name: str,
+        status: int,
+        visible: int,
+        keep_alive: int,
+        always_show: int,
+    ) -> int:
+        """创建菜单"""
+        menu = Menu(
+            name=name,
+            permission=permission,
+            type=type,
+            sort=sort,
+            parent_id=parent_id,
+            path=path,
+            icon=icon,
+            component=component,
+            component_name=component_name,
+            status=status,
+            visible=visible,
+            keep_alive=keep_alive,
+            always_show=always_show,
+        )
+        db.add(menu)
+        await db.flush()
+        await db.refresh(menu)
+        return menu.id
+
+    @staticmethod
+    async def update(
+        db: AsyncSession,
+        menu_id: int,
+        name: str,
+        permission: str,
+        type: int,
+        sort: int,
+        parent_id: int,
+        path: str,
+        icon: str,
+        component: str,
+        component_name: str,
+        status: int,
+        visible: int,
+        keep_alive: int,
+        always_show: int,
+    ) -> None:
+        """更新菜单"""
+        menu = await MenuService.get_by_id(db, menu_id)
+        if menu:
+            menu.name = name
+            menu.permission = permission
+            menu.type = type
+            menu.sort = sort
+            menu.parent_id = parent_id
+            menu.path = path
+            menu.icon = icon
+            menu.component = component
+            menu.component_name = component_name
+            menu.status = status
+            menu.visible = visible
+            menu.keep_alive = keep_alive
+            menu.always_show = always_show
+
+    @staticmethod
+    async def delete(db: AsyncSession, menu_id: int) -> None:
+        """删除菜单"""
+        menu = await MenuService.get_by_id(db, menu_id)
+        if menu:
+            await db.delete(menu)
+
+    @staticmethod
     def _build_menu_tree(menus: List[Menu], parent_id: int) -> List[dict]:
         """构建菜单树"""
         result = []
