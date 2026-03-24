@@ -132,7 +132,7 @@ class RoleService:
             code=code,
             sort=sort,
             data_scope=data_scope,
-            data_scope_dept_ids=data_scope_dept_ids,
+            data_scope_dept_ids=data_scope_dept_ids or "",
             remark=remark,
         )
         db.add(role)
@@ -170,7 +170,7 @@ class RoleService:
         if data_scope is not None:
             role.data_scope = data_scope
         if data_scope_dept_ids is not None:
-            role.data_scope_dept_ids = data_scope_dept_ids
+            role.data_scope_dept_ids = data_scope_dept_ids or ""
         if remark is not None:
             role.remark = remark
 

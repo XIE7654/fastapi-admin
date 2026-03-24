@@ -38,6 +38,7 @@ async def get_current_user(
     from app.module.system.model.user import User
     from app.module.system.service.user import UserService
     from app.module.system.service.oauth2_token import OAuth2TokenService
+    from app.core.user_context import set_user
 
     if credentials is None:
         raise UnauthorizedException("请登录后访问")
@@ -64,6 +65,9 @@ async def get_current_user(
 
     if user.status != 0:
         raise UnauthorizedException("用户已被禁用")
+
+    # 设置用户上下文（用于自动填充 creator/updater）
+    set_user(user.id, user.username, user.nickname)
 
     return user
 

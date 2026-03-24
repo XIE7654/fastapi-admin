@@ -4,10 +4,26 @@ Excel 导出工具类
 import io
 from typing import List, Any, Optional, Callable
 from datetime import datetime
+from urllib.parse import quote
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side
 from fastapi.responses import StreamingResponse
+
+
+def _encode_filename(filename: str) -> str:
+    """
+    编码文件名，支持中文等非 ASCII 字符
+    使用 RFC 5987 标准编码 Content-Disposition 头中的文件名
+    """
+    try:
+        # 尝试用 latin-1 编码，如果成功直接使用
+        filename.encode('latin-1')
+        return f'attachment; filename="{filename}"'
+    except UnicodeEncodeError:
+        # 包含非 ASCII 字符，使用 URL 编码
+        encoded = quote(filename)
+        return f"attachment; filename*=UTF-8''{encoded}"
 
 
 class ExcelUtils:
@@ -93,7 +109,7 @@ class ExcelUtils:
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}"
+                "Content-Disposition": _encode_filename(filename)
             }
         )
 
@@ -151,7 +167,7 @@ class ExcelUtils:
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}"
+                "Content-Disposition": _encode_filename(filename)
             }
         )
 

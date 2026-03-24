@@ -25,6 +25,10 @@ async def lifespan(app: FastAPI):
     # 启动时初始化
     await init_db()
 
+    # 导入模型基类以注册数据库事件监听器
+    # 事件监听器使用 @event.listens_for 装饰器，在模块导入时自动注册
+    import app.module.system.model.base
+
     # Redis 初始化失败不影响服务启动
     try:
         await init_redis()

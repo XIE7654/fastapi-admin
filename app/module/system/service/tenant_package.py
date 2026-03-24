@@ -97,7 +97,7 @@ class TenantPackageService:
             menu_ids=menu_ids_str,
         )
         db.add(package)
-        await db.commit()
+        await db.flush()
         await db.refresh(package)
         return package.id
 
@@ -128,7 +128,7 @@ class TenantPackageService:
             else:
                 package.menu_ids = menu_ids
 
-        await db.commit()
+        await db.flush()
         return True
 
     @staticmethod
@@ -139,7 +139,7 @@ class TenantPackageService:
             return False
 
         await db.delete(package)
-        await db.commit()
+        await db.flush()
         return True
 
     @staticmethod

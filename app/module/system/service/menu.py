@@ -111,14 +111,14 @@ class MenuService:
         """创建菜单"""
         menu = Menu(
             name=name,
-            permission=permission,
+            permission=permission or "",
             type=type,
             sort=sort,
             parent_id=parent_id,
-            path=path,
-            icon=icon,
-            component=component,
-            component_name=component_name,
+            path=path or "",
+            icon=icon or "",
+            component=component or "",
+            component_name=component_name or "",
             status=status,
             visible=visible,
             keep_alive=keep_alive,
@@ -151,14 +151,14 @@ class MenuService:
         menu = await MenuService.get_by_id(db, menu_id)
         if menu:
             menu.name = name
-            menu.permission = permission
+            menu.permission = permission or ""
             menu.type = type
             menu.sort = sort
             menu.parent_id = parent_id
-            menu.path = path
-            menu.icon = icon
-            menu.component = component
-            menu.component_name = component_name
+            menu.path = path or ""
+            menu.icon = icon or ""
+            menu.component = component or ""
+            menu.component_name = component_name or ""
             menu.status = status
             menu.visible = visible
             menu.keep_alive = keep_alive
