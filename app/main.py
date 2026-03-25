@@ -13,6 +13,7 @@ from app.core.scheduler import init_scheduler, start_scheduler, shutdown_schedul
 from app.core.metrics import set_app_info, metrics_endpoint
 from app.middleware.tenant import TenantMiddleware
 from app.middleware.logging import LoggingMiddleware
+from app.middleware.demo import DemoMiddleware
 from app.common.response import response_exception_handler
 from app.common.exceptions import BusinessException
 
@@ -75,6 +76,10 @@ def create_app() -> FastAPI:
         allow_methods=settings.CORS_ALLOW_METHODS,
         allow_headers=settings.CORS_ALLOW_HEADERS,
     )
+
+    # 演示环境中间件
+    if settings.DEMO_MODE:
+        app.add_middleware(DemoMiddleware)
 
     # 多租户中间件
     if settings.TENANT_ENABLE:
