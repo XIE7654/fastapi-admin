@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
     """创建FastAPI应用实例"""
     app = FastAPI(
         title=settings.APP_NAME,
-        description="基于FastAPI的企业级后台管理系统，迁移自芋道Java项目",
+        description="基于FastAPI的企业级后台管理系统。业务逻辑借鉴自芋道 ruoyi-vue-pro 开源项目。",
         version=settings.APP_VERSION,
         openapi_url=f"{settings.API_PREFIX}/openapi.json",
         docs_url=f"{settings.API_PREFIX}/docs",

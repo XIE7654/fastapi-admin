@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     """应用配置"""
 
     # 应用基础配置
-    APP_NAME: str = "芋道管理系统"
+    APP_NAME: str = "FastAPI管理系统"
     APP_VERSION: str = "1.0.0"
     APP_DESCRIPTION: str = "基于FastAPI的企业级后台管理系统"
     DEBUG: bool = False
@@ -57,7 +57,7 @@ class Settings(BaseSettings):
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     # JWT配置
-    JWT_SECRET_KEY: str = "yudao-secret-key-please-change-in-production"
+    JWT_SECRET_KEY: str = "fastapi-admin-secret-key-please-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 * 24 * 60  # 30天
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7

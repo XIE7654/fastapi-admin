@@ -1,6 +1,8 @@
-# FastAPI admin
+# FastAPI Admin
 
-基于 FastAPI 的企业级后台管理系统，迁移自芋道 Java 项目。
+基于 FastAPI 的企业级后台管理系统。
+
+> 本项目后端业务逻辑借鉴自 [芋道 ruoyi-vue-pro](https://github.com/YunaiV/ruoyi-vue-pro) 开源项目，感谢芋道团队的开源贡献。
 
 ## 前端项目
 

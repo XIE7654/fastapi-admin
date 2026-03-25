@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
-LABEL maintainer="Yudao Team"
-LABEL description="Yudao FastAPI Application"
+LABEL maintainer="FastAPI Admin Team"
+LABEL description="FastAPI Admin Application"
 
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE=1 \

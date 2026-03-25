@@ -1,12 +1,12 @@
 [project]
-name = "yudao-fastapi"
+name = "fastapi-admin"
 version = "1.0.0"
 description = "基于FastAPI的企业级后台管理系统"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Yudao Team", email = "xingyu4j@vip.qq.com"}
+    {name = "FastAPI Admin Team", email = "fastapi-admin@example.com"}
 ]
 keywords = ["fastapi", "admin", "management", "system"]
 classifiers = [
@@ -56,12 +56,12 @@ dev = [
 ]
 
 [project.scripts]
-yudao = "app.main:main"
+fastapi-admin = "app.main:main"
 
 [project.urls]
-Homepage = "https://github.com/YunaiV/ruoyi-vue-pro"
-Documentation = "https://doc.iocoder.cn"
-Repository = "https://github.com/YunaiV/ruoyi-vue-pro"
+Homepage = "https://github.com/XIE7654/fastapi-admin"
+Documentation = "https://github.com/XIE7654/fastapi-admin"
+Repository = "https://github.com/XIE7654/fastapi-admin"
 
 [build-system]
 requires = ["hatchling"]
