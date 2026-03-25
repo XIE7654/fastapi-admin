@@ -1,10 +1,37 @@
 """
 菜单相关 Schema
 """
-from typing import Optional
+from typing import Optional, Union
 from pydantic import Field, field_validator
 
 from app.common.schema import CamelModel, CamelORMModel
+
+
+def parse_bool(v: Union[bool, int, str, None]) -> Union[bool, None]:
+    """解析布尔值，支持多种格式"""
+    if v is None:
+        return None  # 返回 None 让 Pydantic 使用字段默认值
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, int):
+        return v != 0
+    if isinstance(v, str):
+        # 处理 MySQL tinyint(1) 存储的 "\x00" 和 "\x01"
+        if v == "\x00":
+            return False
+        if v == "\x01":
+            return True
+        # 处理字符串 "0", "1", "true", "false"
+        if v.lower() in ("0", "false", ""):
+            return False
+        if v.lower() in ("1", "true"):
+            return True
+        # 其他情况转换为 int 再判断
+        try:
+            return int(v) != 0
+        except ValueError:
+            return bool(v)
+    return bool(v)
 
 
 class MenuSave(CamelModel):
@@ -31,6 +58,12 @@ class MenuSave(CamelModel):
         if not v or not v.strip():
             raise ValueError("菜单名称不能为空")
         return v.strip()
+
+    @field_validator("visible", "keep_alive", "always_show", mode="before")
+    @classmethod
+    def validate_bool_fields(cls, v):
+        """解析布尔字段，支持 MySQL tinyint 格式"""
+        return parse_bool(v)
 
 
 class MenuResponse(CamelORMModel):
