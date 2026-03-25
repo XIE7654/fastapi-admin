@@ -2,6 +2,13 @@
 
 基于 FastAPI 的企业级后台管理系统
 
+## 前端项目
+
+| 项目 | 地址 |
+|-----|------|
+| Vben Admin | https://github.com/XIE7654/fastapi-vben.git |
+| Element Plus | https://github.com/XIE7654/fastapi-ele.git |
+
 ## 技术栈
 
 | Java技术 | FastAPI技术 | 版本 |
@@ -140,7 +147,7 @@ python scripts/init_db.py
 # 开发模式
 python -m app.main 
 或
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 28000  
 #python -m app.main  
 # 生产模式
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
