@@ -14,6 +14,7 @@ from app.module.system.model.user import User
 from app.module.system.service.sms_log import SmsLogService
 from app.common.response import success, page_success
 from app.common.excel import ExcelUtils
+from app.common.utils import parse_optional_int
 
 router = APIRouter()
 
@@ -35,11 +36,11 @@ SMS_RECEIVE_STATUS_DICT = {0: "等待接收", 10: "接收成功", 20: "接收失
 async def get_sms_log_page(
     page_no: int = Query(1, ge=1, alias="pageNo", description="页码"),
     page_size: int = Query(10, ge=1, le=100, alias="pageSize", description="每页数量"),
-    channel_id: int = Query(None, alias="channelId", description="渠道编号"),
-    template_id: int = Query(None, alias="templateId", description="模板编号"),
+    channel_id: Optional[str] = Query(None, alias="channelId", description="渠道编号"),
+    template_id: Optional[str] = Query(None, alias="templateId", description="模板编号"),
     mobile: str = Query(None, description="手机号"),
-    send_status: int = Query(None, alias="sendStatus", description="发送状态"),
-    receive_status: int = Query(None, alias="receiveStatus", description="接收状态"),
+    send_status: Optional[str] = Query(None, alias="sendStatus", description="发送状态"),
+    receive_status: Optional[str] = Query(None, alias="receiveStatus", description="接收状态"),
     send_time: List[datetime] = Query(None, alias="sendTime", description="发送时间"),
     receive_time: List[datetime] = Query(None, alias="receiveTime", description="接收时间"),
     db: AsyncSession = Depends(get_db),
@@ -50,11 +51,11 @@ async def get_sms_log_page(
         db,
         page_no=page_no,
         page_size=page_size,
-        channel_id=channel_id,
-        template_id=template_id,
+        channel_id=parse_optional_int(channel_id),
+        template_id=parse_optional_int(template_id),
         mobile=mobile,
-        send_status=send_status,
-        receive_status=receive_status,
+        send_status=parse_optional_int(send_status),
+        receive_status=parse_optional_int(receive_status),
         send_time=send_time,
         receive_time=receive_time,
     )
@@ -132,11 +133,11 @@ async def get_sms_log(
 
 @router.get("/export-excel", summary="导出短信日志 Excel")
 async def export_sms_log_excel(
-    channel_id: int = Query(None, alias="channelId", description="渠道编号"),
-    template_id: int = Query(None, alias="templateId", description="模板编号"),
+    channel_id: Optional[str] = Query(None, alias="channelId", description="渠道编号"),
+    template_id: Optional[str] = Query(None, alias="templateId", description="模板编号"),
     mobile: str = Query(None, description="手机号"),
-    send_status: int = Query(None, alias="sendStatus", description="发送状态"),
-    receive_status: int = Query(None, alias="receiveStatus", description="接收状态"),
+    send_status: Optional[str] = Query(None, alias="sendStatus", description="发送状态"),
+    receive_status: Optional[str] = Query(None, alias="receiveStatus", description="接收状态"),
     send_time: List[datetime] = Query(None, alias="sendTime", description="发送时间"),
     receive_time: List[datetime] = Query(None, alias="receiveTime", description="接收时间"),
     db: AsyncSession = Depends(get_db),
@@ -146,11 +147,11 @@ async def export_sms_log_excel(
     # 获取数据
     logs = await SmsLogService.get_list(
         db,
-        channel_id=channel_id,
-        template_id=template_id,
+        channel_id=parse_optional_int(channel_id),
+        template_id=parse_optional_int(template_id),
         mobile=mobile,
-        send_status=send_status,
-        receive_status=receive_status,
+        send_status=parse_optional_int(send_status),
+        receive_status=parse_optional_int(receive_status),
         send_time=send_time,
         receive_time=receive_time,
     )

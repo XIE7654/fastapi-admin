@@ -155,3 +155,18 @@ def mask_email(email: str) -> str:
     if len(name) <= 2:
         return name[0] + "***@" + parts[1]
     return name[:2] + "***" + name[-1] + "@" + parts[1]
+
+
+def parse_optional_int(value: Optional[str]) -> Optional[int]:
+    """
+    解析可选的整数参数，将空字符串转换为 None
+
+    Args:
+        value: 字符串值，可能为空字符串或 None
+
+    Returns:
+        整数或 None
+    """
+    if value is None or value == "":
+        return None
+    return int(value)
