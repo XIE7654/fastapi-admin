@@ -4,11 +4,11 @@ services:
   # MySQL 数据库
   mysql:
     image: mysql:8.0
-    container_name: yudao-mysql
+    container_name: fastadmin-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root123456
-      MYSQL_DATABASE: ruoyi-vue-pro
+      MYSQL_DATABASE: fastadmin
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
@@ -21,7 +21,7 @@ services:
   # Redis 缓存
   redis:
     image: redis:7-alpine
-    container_name: yudao-redis
+    container_name: fastadmin-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -34,14 +34,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: yudao-api
+    container_name: fastadmin-api
     restart: unless-stopped
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=root123456
-      - DB_NAME=ruoyi-vue-pro
+      - DB_NAME=fastadmin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DEBUG=false

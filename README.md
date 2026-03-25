@@ -128,7 +128,7 @@ vim .env
 
 ```bash
 # 创建数据库
-mysql -u root -p -e "CREATE DATABASE \`ruoyi-vue-pro\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE \`fastadmin\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # 初始化表结构和数据
 python scripts/init_db.py
@@ -138,6 +138,8 @@ python scripts/init_db.py
 
 ```bash
 # 开发模式
+python -m app.main 
+或
 uvicorn app.main:app --reload
 #python -m app.main  
 # 生产模式
