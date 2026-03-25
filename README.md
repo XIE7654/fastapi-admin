@@ -215,15 +215,6 @@ mysql -u root -p -e "CREATE DATABASE \`fastadmin\` CHARACTER SET utf8mb4 COLLATE
 mysql -u root -p fastadmin < scripts/fastadmin.sql
 ```
 
-**方式二：使用 Alembic 迁移**
-
-```bash
-# 创建数据库
-mysql -u root -p -e "CREATE DATABASE \`fastadmin\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# 执行迁移
-alembic upgrade head
-```
 
 ### 4. 启动服务
 
