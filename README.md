@@ -233,7 +233,7 @@ uvicorn app.main:app --reload --port 28000
 **生产模式**
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn app.main:app --host 0.0.0.0 --port 28000 --workers 4
 ```
 
 ### 5. Docker 部署
