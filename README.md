@@ -11,6 +11,15 @@
 | Vben Admin | https://github.com/XIE7654/fastapi-vben.git |
 | Element Plus | https://github.com/XIE7654/fastapi-ele.git |
 
+## 在线演示
+
+| 前端 | 地址 |
+|-----|------|
+| Element Plus | https://fastele.chenzida.com/ |
+| Vben Admin | https://fastvben.chenzida.com/ |
+
+**演示账号**：`admin` / `admin123`
+
 ## 技术栈
 
 | Java技术 | FastAPI技术 | 版本 |
@@ -344,11 +353,6 @@ alembic downgrade -1
 ```bash
 pytest
 ```
-
-## 默认账号
-
-- 用户名: `admin`
-- 密码: `admin123`
 
 ## License
 
