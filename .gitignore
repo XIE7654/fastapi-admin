@@ -22,7 +22,8 @@ yarn.lock
 package-lock.json
 .VSCodeCounter
 **/backend-mock/data
-
+__pycache__/
+*.pyc
 # local env files
 .env
 .env.local
