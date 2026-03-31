@@ -108,7 +108,7 @@ def register_routers(app: FastAPI):
         sms, sms_log, mail, notify_template, notice, area, social, oauth2,
         permission
     )
-    from app.module.ai.controller import ai_model_router
+    from app.module.ai.controller import ai_model_router, api_key_router, chat_role_router, chat_message_router, image_router, tool_router
 
     # ====================
     # 认证管理
@@ -206,8 +206,23 @@ def register_routers(app: FastAPI):
     # AI 模块
     # ====================
 
+    # AI API 密钥管理
+    app.include_router(api_key_router, prefix=f"{settings.API_PREFIX}/ai/api-key", tags=["AI API 密钥管理"])
+
     # AI 模型管理
     app.include_router(ai_model_router, prefix=f"{settings.API_PREFIX}/ai/model", tags=["AI 模型管理"])
+
+    # AI 聊天角色管理
+    app.include_router(chat_role_router, prefix=f"{settings.API_PREFIX}/ai/chat-role", tags=["AI 聊天角色管理"])
+
+    # AI 聊天消息管理
+    app.include_router(chat_message_router, prefix=f"{settings.API_PREFIX}/ai/chat/message", tags=["AI 聊天消息管理"])
+
+    # AI 绘画管理
+    app.include_router(image_router, prefix=f"{settings.API_PREFIX}/ai/image", tags=["AI 绘画管理"])
+
+    # AI 工具管理
+    app.include_router(tool_router, prefix=f"{settings.API_PREFIX}/ai/tool", tags=["AI 工具管理"])
 
 
 # 创建应用实例

@@ -73,6 +73,7 @@ class Settings(BaseSettings):
         "/admin-api/infra/file/**",
         "/admin-api/system/tenant/simple-list",
         "/admin-api/system/tenant/get-by-website",
+        "/admin-api/ai/**",  # AI 模块
     ]
 
     # 安全配置
