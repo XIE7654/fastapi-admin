@@ -108,7 +108,7 @@ def register_routers(app: FastAPI):
         sms, sms_log, mail, notify_template, notice, area, social, oauth2,
         permission
     )
-    from app.module.ai.controller import ai_model_router, api_key_router, chat_role_router, chat_message_router, image_router, tool_router
+    from app.module.ai.controller import ai_model_router, api_key_router, chat_role_router, chat_message_router, chat_conversation_router, image_router, tool_router, music_router, write_router, mind_map_router
 
     # ====================
     # 认证管理
@@ -218,11 +218,23 @@ def register_routers(app: FastAPI):
     # AI 聊天消息管理
     app.include_router(chat_message_router, prefix=f"{settings.API_PREFIX}/ai/chat/message", tags=["AI 聊天消息管理"])
 
+    # AI 聊天对话管理
+    app.include_router(chat_conversation_router, prefix=f"{settings.API_PREFIX}/ai/chat/conversation", tags=["AI 聊天对话管理"])
+
     # AI 绘画管理
     app.include_router(image_router, prefix=f"{settings.API_PREFIX}/ai/image", tags=["AI 绘画管理"])
 
     # AI 工具管理
     app.include_router(tool_router, prefix=f"{settings.API_PREFIX}/ai/tool", tags=["AI 工具管理"])
+
+    # AI 音乐管理
+    app.include_router(music_router, prefix=f"{settings.API_PREFIX}/ai/music", tags=["AI 音乐管理"])
+
+    # AI 写作管理
+    app.include_router(write_router, prefix=f"{settings.API_PREFIX}/ai/write", tags=["AI 写作管理"])
+
+    # AI 思维导图管理
+    app.include_router(mind_map_router, prefix=f"{settings.API_PREFIX}/ai/mind-map", tags=["AI 思维导图管理"])
 
 
 # 创建应用实例

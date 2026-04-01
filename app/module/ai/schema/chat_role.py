@@ -2,9 +2,9 @@
 AI 聊天角色相关 Schema
 参考 ruoyi-vue-pro yudao-module-ai 模块的 AiChatRolePageReqVO、AiChatRoleRespVO
 """
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.common.schema import CamelModel, CamelORMModel
 from app.common.pagination import PageQuery
@@ -55,6 +55,18 @@ class ChatRoleUpdate(CamelModel):
     status: Optional[int] = Field(None, description="状态")
 
 
+def convert_bit_to_int(v: Any) -> Optional[int]:
+    """将 MySQL BIT 类型转换为整数"""
+    if v is None:
+        return None
+    if isinstance(v, bytes):
+        # MySQL BIT 类型返回 bytes，如 b'\x01' 表示 1
+        return int.from_bytes(v, byteorder='big')
+    if isinstance(v, bool):
+        return 1 if v else 0
+    return int(v)
+
+
 class ChatRoleResponse(CamelORMModel):
     """AI 聊天角色响应"""
 
@@ -73,3 +85,9 @@ class ChatRoleResponse(CamelORMModel):
     public_status: Optional[int] = Field(None, description="是否公开: 0-否, 1-是")
     status: Optional[int] = Field(None, description="状态")
     create_time: Optional[datetime] = Field(None, description="创建时间")
+
+    @field_validator('public_status', 'status', mode='before')
+    @classmethod
+    def validate_bit_field(cls, v: Any) -> Optional[int]:
+        """处理 MySQL BIT 类型字段"""
+        return convert_bit_to_int(v)

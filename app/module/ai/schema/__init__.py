@@ -14,6 +14,11 @@ from app.module.ai.schema.image import (
     ImageResponse,
     ImageDrawReqVO,
 )
+from app.module.ai.schema.write import (
+    WritePageQuery,
+    WriteGenerateReqVO,
+    WriteResponse,
+)
 
 __all__ = [
     "ApiKeyCreate",
@@ -25,4 +30,7 @@ __all__ = [
     "ImageUpdate",
     "ImageResponse",
     "ImageDrawReqVO",
+    "WritePageQuery",
+    "WriteGenerateReqVO",
+    "WriteResponse",
 ]
