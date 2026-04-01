@@ -7,8 +7,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import check_permission
-from app.core.user_context import get_user_id
+from app.core.dependencies import check_permission, get_current_user
 from app.module.system.model.user import User
 from app.module.ai.service.image import ImageService
 from app.module.ai.schema.image import (
@@ -29,10 +28,10 @@ router = APIRouter()
 async def get_image_page_my(
     query: ImagePageQuery = Depends(),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取【我的】绘图分页"""
-    user_id = get_user_id()
-    images, total = await ImageService.get_page_my(db, user_id, query)
+    images, total = await ImageService.get_page_my(db, current_user.id, query)
     image_responses = [ImageResponse.model_validate(img) for img in images]
     return page_success(
         list_data=image_responses,
@@ -62,11 +61,11 @@ async def get_image_page_public(
 async def get_image_my(
     id: int = Query(..., description="绘画编号"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取【我的】绘图记录"""
-    user_id = get_user_id()
     image = await ImageService.get_by_id(db, id)
-    if not image or image.user_id != user_id:
+    if not image or image.user_id != current_user.id:
         return success(data=None)
     return success(data=ImageResponse.model_validate(image))
 
@@ -75,13 +74,13 @@ async def get_image_my(
 async def get_image_list_my_by_ids(
     ids: str = Query(..., description="绘画编号数组，逗号分隔"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """获取【我的】绘图记录列表"""
-    user_id = get_user_id()
     id_list = [int(x) for x in ids.split(",") if x.strip()]
     images = await ImageService.get_list_by_ids(db, id_list)
     # 过滤只属于自己的
-    my_images = [img for img in images if img.user_id == user_id]
+    my_images = [img for img in images if img.user_id == current_user.id]
     image_responses = [ImageResponse.model_validate(img) for img in my_images]
     return success(data=image_responses)
 
@@ -91,10 +90,10 @@ async def draw_image(
     request: Request,
     draw_req: ImageDrawReqVO,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """生成图片"""
-    user_id = get_user_id()
-    image_id = await ImageService.draw_image(db, user_id, draw_req)
+    image_id = await ImageService.draw_image(db, current_user.id, draw_req)
     return success(data=image_id)
 
 
@@ -102,10 +101,10 @@ async def draw_image(
 async def delete_image_my(
     id: int = Query(..., description="绘画编号"),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """删除【我的】绘画记录"""
-    user_id = get_user_id()
-    await ImageService.delete_my(db, id, user_id)
+    await ImageService.delete_my(db, id, current_user.id)
     return success(data=True)
 
 

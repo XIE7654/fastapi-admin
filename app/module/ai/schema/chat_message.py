@@ -1,6 +1,6 @@
 """
 AI 聊天消息相关 Schema
-参考 ruoyi-vue-pro yudao-module-ai AiChatMessageRespVO
+参考 ruoyi-vue-pro yudao-module-ai AiChatMessageRespVO、AiChatMessageSendReqVO、AiChatMessageSendRespVO
 """
 from typing import Optional, List
 from datetime import datetime
@@ -50,3 +50,34 @@ class ChatMessagePageQuery(PageQuery):
     user_id: Optional[int] = Field(None, description="用户编号")
     content: Optional[str] = Field(None, description="消息内容")
     create_time: Optional[List[datetime]] = Field(None, description="创建时间范围")
+
+
+# ========== 发送消息相关 ==========
+
+class ChatMessageSendReqVO(CamelModel):
+    """AI 聊天消息发送请求"""
+
+    conversation_id: int = Field(..., description="聊天对话编号")
+    content: str = Field(..., description="聊天内容")
+    use_context: Optional[bool] = Field(True, description="是否携带上下文")
+    use_search: Optional[bool] = Field(False, description="是否联网搜索")
+    attachment_urls: Optional[List[str]] = Field(None, description="附件 URL 数组")
+
+
+class ChatMessageSendRespVO(CamelModel):
+    """AI 聊天消息发送响应"""
+
+    send: Optional["ChatMessageSendRespVO.Message"] = Field(None, description="发送消息")
+    receive: Optional["ChatMessageSendRespVO.Message"] = Field(None, description="接收消息")
+
+    class Message(CamelModel):
+        """消息"""
+
+        id: Optional[int] = Field(None, description="编号")
+        type: Optional[str] = Field(None, description="消息类型")
+        content: Optional[str] = Field(None, description="聊天内容")
+        reasoning_content: Optional[str] = Field(None, description="推理内容")
+        segment_ids: Optional[List[int]] = Field(None, description="知识库段落编号数组")
+        segments: Optional[List[KnowledgeSegment]] = Field(None, description="知识库段落数组")
+        web_search_pages: Optional[List[dict]] = Field(None, description="联网搜索的网页内容数组")
+        create_time: Optional[datetime] = Field(None, description="创建时间")
