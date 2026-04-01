@@ -3,7 +3,7 @@ AI 聊天消息控制器
 参考 ruoyi-vue-pro yudao-module-ai AiChatMessageController
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, Request, AliasPath
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
