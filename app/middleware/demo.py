@@ -4,10 +4,10 @@
 """
 from typing import Callable
 from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
-from app.common.exceptions import BusinessException, ErrorCode
 
 
 class DemoMiddleware(BaseHTTPMiddleware):
@@ -40,10 +40,14 @@ class DemoMiddleware(BaseHTTPMiddleware):
             if any(path.startswith(allowed) for allowed in self.ALLOWED_PATHS):
                 return await call_next(request)
 
-            # 演示环境禁止写操作
-            raise BusinessException(
-                code=ErrorCode.DEMO_DENY,
-                message="演示环境，禁止写入操作"
+            # 演示环境禁止写操作，返回友好的 JSON 响应
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "code": 1003000000,
+                    "msg": "演示环境，禁止写入操作",
+                    "data": None
+                }
             )
 
         return await call_next(request)
