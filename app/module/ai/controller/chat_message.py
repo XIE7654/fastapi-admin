@@ -3,7 +3,7 @@ AI 聊天消息控制器
 参考 ruoyi-vue-pro yudao-module-ai AiChatMessageController
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, AliasPath
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -39,12 +39,12 @@ async def get_message_page(
 
 @router.get("/list-by-conversation-id", summary="获得指定对话的消息列表")
 async def get_message_list_by_conversation_id(
-    conversation_id: int = Query(..., description="对话编号"),
+    conversationId: int = Query(..., alias="conversationId", description="对话编号"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """根据对话ID获取消息列表"""
-    messages = await ChatMessageService.get_list_by_conversation_id(db, conversation_id)
+    messages = await ChatMessageService.get_list_by_conversation_id(db, conversationId)
     message_responses = [ChatMessageResponse.model_validate(m) for m in messages]
     return success(data=message_responses)
 
@@ -66,12 +66,12 @@ async def delete_message(
 @operate_log(type="AI 聊天消息", sub_type="删除对话消息")
 async def delete_message_by_conversation_id(
     request: Request,
-    conversation_id: int = Query(..., description="对话编号"),
+    conversationId: int = Query(..., alias="conversationId", description="对话编号"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """删除指定对话的所有消息"""
-    await ChatMessageService.delete_by_conversation_id(db, conversation_id)
+    await ChatMessageService.delete_by_conversation_id(db, conversationId)
     return success(data=True)
 
 
