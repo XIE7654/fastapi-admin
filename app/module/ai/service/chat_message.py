@@ -10,6 +10,7 @@ from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.module.ai.model.chat_message import ChatMessage
+from app.module.ai.model.chat_conversation import ChatConversation
 from app.module.ai.schema.chat_message import ChatMessagePageQuery, ChatMessageSendReqVO, ChatMessageSendRespVO
 from app.core.exceptions import BusinessException
 
@@ -24,6 +25,31 @@ class ChatMessageService:
             select(ChatMessage).where(ChatMessage.id == message_id, ChatMessage.deleted == 0)
         )
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_conversation_by_id(db: AsyncSession, conversation_id: int) -> Optional[ChatConversation]:
+        """根据ID获取对话"""
+        result = await db.execute(
+            select(ChatConversation).where(
+                ChatConversation.id == conversation_id,
+                ChatConversation.deleted == 0
+            )
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def validate_conversation_exists(
+        db: AsyncSession,
+        conversation_id: int,
+        user_id: int
+    ) -> ChatConversation:
+        """校验对话是否存在，并验证用户权限"""
+        conversation = await ChatMessageService.get_conversation_by_id(db, conversation_id)
+        if not conversation:
+            raise BusinessException(code=1040030000, message="对话不存在")
+        if conversation.user_id != user_id:
+            raise BusinessException(code=1040030000, message="对话不存在")
+        return conversation
 
     @staticmethod
     async def get_list_by_conversation_id(
@@ -110,9 +136,11 @@ class ChatMessageService:
         conversation_id: int,
         user_id: int,
         content: str,
+        model: str,
+        model_id: int,
+        role_id: Optional[int] = None,
+        reply_id: Optional[int] = None,
         message_type: str = "user",
-        model: Optional[str] = None,
-        model_id: Optional[int] = None,
         segment_ids: Optional[List[int]] = None,
         web_search_pages: Optional[List[dict]] = None,
         attachment_urls: Optional[List[str]] = None,
@@ -123,9 +151,11 @@ class ChatMessageService:
         message = ChatMessage(
             conversation_id=conversation_id,
             user_id=user_id,
+            role_id=role_id,
+            reply_id=reply_id,
             type=message_type,
             content=content,
-            model=model or "",  # 提供默认空字符串，避免数据库 NOT NULL 约束
+            model=model,
             model_id=model_id,
             segment_ids=segment_ids,
             web_search_pages=web_search_pages,
@@ -145,29 +175,41 @@ class ChatMessageService:
         user_id: int
     ) -> ChatMessageSendRespVO:
         """发送消息（段式）"""
-        # 1. 创建用户消息
+        # 1. 校验对话存在并获取模型信息
+        conversation = await ChatMessageService.validate_conversation_exists(
+            db, send_req.conversation_id, user_id
+        )
+
+        # 2. 创建用户消息
         user_message = await ChatMessageService.create_message(
             db=db,
             conversation_id=send_req.conversation_id,
             user_id=user_id,
             content=send_req.content,
+            model=conversation.model,
+            model_id=conversation.model_id,
+            role_id=conversation.role_id,
             message_type="user",
             attachment_urls=send_req.attachment_urls,
-            use_context=send_req.use_context or True,
+            use_context=send_req.use_context if send_req.use_context is not None else True,
         )
 
-        # 2. 创建AI响应消息（这里需要集成实际的AI服务）
+        # 3. 创建AI响应消息（这里需要集成实际的AI服务）
         # 目前先返回模拟响应
         ai_message = await ChatMessageService.create_message(
             db=db,
             conversation_id=send_req.conversation_id,
             user_id=user_id,
             content="这是一个模拟的AI响应，请集成实际的AI服务。",
+            model=conversation.model,
+            model_id=conversation.model_id,
+            role_id=conversation.role_id,
+            reply_id=user_message.id,
             message_type="assistant",
-            use_context=send_req.use_context or True,
+            use_context=send_req.use_context if send_req.use_context is not None else True,
         )
 
-        # 3. 构建响应
+        # 4. 构建响应
         return ChatMessageSendRespVO(
             send=ChatMessageSendRespVO.Message(
                 id=user_message.id,
@@ -190,18 +232,26 @@ class ChatMessageService:
         user_id: int
     ) -> AsyncGenerator[str, None]:
         """发送消息（流式）"""
-        # 1. 创建用户消息
+        # 1. 校验对话存在并获取模型信息
+        conversation = await ChatMessageService.validate_conversation_exists(
+            db, send_req.conversation_id, user_id
+        )
+
+        # 2. 创建用户消息
         user_message = await ChatMessageService.create_message(
             db=db,
             conversation_id=send_req.conversation_id,
             user_id=user_id,
             content=send_req.content,
+            model=conversation.model,
+            model_id=conversation.model_id,
+            role_id=conversation.role_id,
             message_type="user",
             attachment_urls=send_req.attachment_urls,
-            use_context=send_req.use_context or True,
+            use_context=send_req.use_context if send_req.use_context is not None else True,
         )
 
-        # 2. 先发送用户消息
+        # 3. 先发送用户消息
         send_resp = {
             "send": {
                 "id": user_message.id,
@@ -213,11 +263,10 @@ class ChatMessageService:
         }
         yield f"data: {json.dumps(send_resp, ensure_ascii=False)}\n\n"
 
-        # 3. 模拟流式响应（实际需要集成AI服务）
+        # 4. 模拟流式响应（实际需要集成AI服务）
         # 这里模拟一个简单的流式响应
         response_text = "这是一个模拟的AI流式响应。请集成实际的AI服务来获得真实的对话体验。"
         full_content = ""
-        ai_message_id = None
 
         for char in response_text:
             full_content += char
@@ -233,17 +282,21 @@ class ChatMessageService:
             yield f"data: {json.dumps(receive_resp, ensure_ascii=False)}\n\n"
             await asyncio.sleep(0.02)  # 模拟打字延迟
 
-        # 4. 创建AI消息记录
+        # 5. 创建AI消息记录
         ai_message = await ChatMessageService.create_message(
             db=db,
             conversation_id=send_req.conversation_id,
             user_id=user_id,
             content=full_content,
+            model=conversation.model,
+            model_id=conversation.model_id,
+            role_id=conversation.role_id,
+            reply_id=user_message.id,
             message_type="assistant",
-            use_context=send_req.use_context or True,
+            use_context=send_req.use_context if send_req.use_context is not None else True,
         )
 
-        # 5. 发送最终响应
+        # 6. 发送最终响应
         final_resp = {
             "send": None,
             "receive": {
