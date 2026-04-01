@@ -125,7 +125,7 @@ class ChatMessageService:
             user_id=user_id,
             type=message_type,
             content=content,
-            model=model,
+            model=model or "",  # 提供默认空字符串，避免数据库 NOT NULL 约束
             model_id=model_id,
             segment_ids=segment_ids,
             web_search_pages=web_search_pages,
