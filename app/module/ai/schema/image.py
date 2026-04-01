@@ -4,10 +4,21 @@ AI 绘画相关 Schema
 """
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.common.schema import CamelModel, CamelORMModel
 from app.common.pagination import PageQuery
+
+
+def convert_bit_to_int(v: Any) -> Optional[int]:
+    """将 MySQL BIT 类型转换为整数"""
+    if v is None:
+        return None
+    if isinstance(v, bytes):
+        return int.from_bytes(v, byteorder='big')
+    if isinstance(v, bool):
+        return 1 if v else 0
+    return int(v)
 
 
 class ImagePageQuery(PageQuery):
@@ -47,6 +58,12 @@ class ImageResponse(CamelORMModel):
     task_id: Optional[str] = Field(None, description="任务编号")
     buttons: Optional[str] = Field(None, description="mj buttons 按钮")
     create_time: Optional[datetime] = Field(None, description="创建时间")
+
+    @field_validator('public_status', 'status', mode='before')
+    @classmethod
+    def validate_bit_field(cls, v: Any) -> Optional[int]:
+        """处理 MySQL BIT 类型字段"""
+        return convert_bit_to_int(v)
 
 
 class ImageDrawReqVO(CamelModel):
