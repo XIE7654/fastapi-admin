@@ -69,8 +69,9 @@ class ImageResponse(CamelORMModel):
 class ImageDrawReqVO(CamelModel):
     """AI 绘画生成请求"""
 
-    platform: str = Field(..., description="平台")
-    model: Optional[str] = Field(None, description="模型")
+    model_id: Optional[int] = Field(None, description="模型编号")
+    platform: Optional[str] = Field(None, description="平台（model_id 为空时使用）")
+    model: Optional[str] = Field(None, description="模型标识（model_id 为空时使用）")
     prompt: str = Field(..., description="提示词")
     width: int = Field(default=1024, description="图片宽度")
     height: int = Field(default=1024, description="图片高度")
