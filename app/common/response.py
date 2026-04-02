@@ -14,7 +14,11 @@ T = TypeVar("T")
 
 
 class TimestampEncoder(json.JSONEncoder):
-    """自定义 JSON 编码器，将 datetime 序列化为时间戳（毫秒）"""
+    """自定义 JSON 编码器，将 datetime 序列化为时间戳（毫秒），大整数序列化为字符串"""
+
+    # JavaScript 安全整数范围
+    MAX_SAFE_INTEGER = 9007199254740991  # 2^53 - 1
+    MIN_SAFE_INTEGER = -9007199254740991  # -(2^53 - 1)
 
     def default(self, obj):
         if isinstance(obj, datetime):
@@ -29,7 +33,30 @@ class TimestampEncoder(json.JSONEncoder):
                 return obj.decode('utf-8')
             except UnicodeDecodeError:
                 return None
+        elif isinstance(obj, int):
+            # 大整数转为字符串，避免 JavaScript 精度丢失
+            if obj > self.MAX_SAFE_INTEGER or obj < self.MIN_SAFE_INTEGER:
+                return str(obj)
         return super().default(obj)
+
+
+# JavaScript 安全整数范围
+MAX_SAFE_INTEGER = 9007199254740991  # 2^53 - 1
+MIN_SAFE_INTEGER = -9007199254740991  # -(2^53 - 1)
+
+
+def convert_big_int_to_str(data: Any) -> Any:
+    """
+    递归转换大整数为字符串，避免 JavaScript 精度丢失
+    """
+    if isinstance(data, dict):
+        return {k: convert_big_int_to_str(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_big_int_to_str(item) for item in data]
+    elif isinstance(data, int):
+        if data > MAX_SAFE_INTEGER or data < MIN_SAFE_INTEGER:
+            return str(data)
+    return data
 
 
 def serialize_data(data: Any) -> Any:
@@ -40,15 +67,19 @@ def serialize_data(data: Any) -> Any:
         data: 原始数据
 
     Returns:
-        序列化后的数据（datetime 转为时间戳）
+        序列化后的数据（datetime 转为时间戳，大整数转为字符串）
     """
+
     if isinstance(data, BaseModel):
-        # Pydantic 模型：使用自定义编码器序列化
-        return json.loads(json.dumps(data.model_dump(by_alias=True), cls=TimestampEncoder))
+        # Pydantic 模型：先转为字典，再处理 datetime 和大整数
+        obj_dict = data.model_dump(by_alias=True)
+        obj_dict = convert_big_int_to_str(obj_dict)
+        return json.loads(json.dumps(obj_dict, cls=TimestampEncoder))
     elif isinstance(data, list):
         return [serialize_data(item) for item in data]
     elif isinstance(data, dict):
-        return {k: serialize_data(v) for k, v in data.items()}
+        result = {k: serialize_data(v) for k, v in data.items()}
+        return convert_big_int_to_str(result)
     elif isinstance(data, datetime):
         return int(data.timestamp() * 1000)
     elif isinstance(data, date):
@@ -59,6 +90,10 @@ def serialize_data(data: Any) -> Any:
             return data.decode('utf-8')
         except UnicodeDecodeError:
             return None
+    elif isinstance(data, int):
+        # 大整数转为字符串，避免 JavaScript 精度丢失
+        if data > MAX_SAFE_INTEGER or data < MIN_SAFE_INTEGER:
+            return str(data)
     return data
 
 
